@@ -28,7 +28,7 @@
 ├─ Phase 2  源代码文档 — 提取 → 排版 → PDF
 ├─ Phase 3  用户手册/设计说明书 — 模板填充 → PDF
 ├─ Phase 4  权利归属证明 + 申请表预填
-└─ Phase 5  五维度核验 (一致性/格式/内容/签章/交又)
+└─ Phase 5  五维度核验 (一致性/格式/内容/签章/交叉)
 
 阶段二: 在线申请 (0.5 天)
 ├─ Phase 6  实名认证 → 在线填写 → 上传 → 提交 → 缴费
@@ -63,11 +63,15 @@
 4. 开发方式:
    [ ] 独立开发     [ ] 合作开发 (需协议)
    [ ] 委托开发     [ ] 职务作品 (需单位证明)
-   [ ] 基于开源项目修改 → 需声明原创性
+   [ ] 基于开源项目修改 → 需声明原创性, 说明修改内容
 
 5. 是否已发表:
-   [ ] 已发表 (有 App Store/应用商店 上架) → 提供首次发表日期
+   [ ] 已发表 (有 App Store/应用商店 上架) → 提供首次发表日期 + 上架截图
    [ ] 未发表 → 填 "未发表"
+
+6. 申请人是否为中国大陆主体:
+   [ ] 是 (正常流程)
+   [ ] 否 (港澳台/境外 → 需委托境内代理机构, 额外提供代理委托书)
 ```
 
 > **任一信息不明确 → 立即停止，获得用户确认后再继续。**
@@ -221,17 +225,22 @@ App 涉及多端代码时，选择一个代码库提交:
 > **[SHELL]** **不要**像旧版那样 `cat` 所有文件再截取。正确做法是保持文件结构，取文件列表的前段和后段。
 
 ```bash
-# [SHELL] 定义路径 — 用户提供
+# [SHELL] 定义路径 — 用户提供 (末尾不要加 /)
 SOURCE_DIR="/path/to/your/project/source"   # ← 改为实际路径
+# 规范化路径 (去除末尾 /)
+SOURCE_DIR="${SOURCE_DIR%/}"
 OUTPUT_DIR="./copyright_materials"
 mkdir -p ${OUTPUT_DIR}
 
 # [SHELL] Step 1: 获取所有源文件 (排除第三方库/构建产物)
-SOURCE_FILES=$(find ${SOURCE_DIR} -type f \
+# 使用临时文件避免空格路径问题
+SOURCE_FILES_LIST="${OUTPUT_DIR}/source_files_list.tmp"
+find "${SOURCE_DIR}" -type f \
     \( -name "*.swift" -o -name "*.m" -o -name "*.h" -o -name "*.c" \
        -o -name "*.cpp" -o -name "*.java" -o -name "*.kt" \
        -o -name "*.js" -o -name "*.ts" -o -name "*.tsx" \
-       -o -name "*.py" -o -name "*.dart" -o -name "*.vue" \) \
+       -o -name "*.py" -o -name "*.dart" -o -name "*.vue" \
+       -o -name "*.cs" -o -name "*.go" -o -name "*.rs" -o -name "*.rb" \) \
     -not -path "*/Pods/*" \
     -not -path "*/.build/*" \
     -not -path "*/node_modules/*" \
@@ -240,23 +249,26 @@ SOURCE_FILES=$(find ${SOURCE_DIR} -type f \
     -not -path "*/build/*" \
     -not -path "*/Carthage/*" \
     -not -path "*/vendor/*" \
-    -not -path "*/Tests/*" \
-    -not -path "*/UITests/*" \
-    | sort)
+    | sort > "${SOURCE_FILES_LIST}"
 
-FILE_COUNT=$(echo "$SOURCE_FILES" | wc -l)
+FILE_COUNT=$(wc -l < "${SOURCE_FILES_LIST}")
 echo "📄 源文件总数: ${FILE_COUNT}"
+if [ ${FILE_COUNT} -eq 0 ]; then
+    echo "❌ 未找到任何源文件! 请检查 SOURCE_DIR 路径"
+    exit 1
+fi
 
-# [SHELL] Step 2: 生成带文件标识的完整代码列表 (每个文件前加注释头)
+# [SHELL] Step 2: 生成带文件标识的完整代码列表
 > ${OUTPUT_DIR}/full_source_with_headers.txt
-for f in $SOURCE_FILES; do
+while IFS= read -r f; do
+    [ -z "$f" ] && continue
     # 计算相对路径
-    REL_PATH=$(echo "$f" | sed "s|${SOURCE_DIR}/||")
+    REL_PATH="${f#${SOURCE_DIR}/}"
     echo "// ===== 文件: ${REL_PATH} =====" >> ${OUTPUT_DIR}/full_source_with_headers.txt
-    # 保留实际代码行 (不删除 import 和注释 — 版权局要的是真实代码)
-    grep -v '^\s*$' "$f" >> ${OUTPUT_DIR}/full_source_with_headers.txt || true
+    # 保留实际代码行 (版权局要的是真实代码, 不去除 import/注释)
+    grep -v '^\s*$' "$f" >> ${OUTPUT_DIR}/full_source_with_headers.txt 2>/dev/null || true
     echo "" >> ${OUTPUT_DIR}/full_source_with_headers.txt
-done
+done < "${SOURCE_FILES_LIST}"
 
 TOTAL=$(wc -l < ${OUTPUT_DIR}/full_source_with_headers.txt)
 echo "📊 总行数 (含文件标识): ${TOTAL}"
@@ -284,93 +296,147 @@ echo "✅ 最终提交: ${FINAL_LINES} 行, ${PAGES} 页"
 
 ```python
 # [WRITE] copyright_materials/generate_source_pdf.py
+"""
+源代码 PDF 生成器 — 符合版权局格式要求
+依赖: pip install reportlab
+运行: python3 generate_source_pdf.py
+"""
 import sys
 import os
+import glob
 
-# 需要: pip install reportlab (如未安装, Claude Code 先 pip install)
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import cm
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import SimpleDocTemplate, Paragraph, PageBreak
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus.frames import Frame
-from reportlab.platypus.doctemplate import PageTemplate
+try:
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import cm
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, PageBreak
+    from reportlab.lib.styles import ParagraphStyle
+except ImportError:
+    print("❌ 缺少 reportlab 库, 请运行: pip3 install reportlab")
+    print("   或使用手动方案: Word/Pages 排版后导出 PDF")
+    sys.exit(1)
 
-# 配置
-SOFTWARE_NAME = "你的软件全称V1.0"   # ← 从 COPYRIGHT_INFO.md 复制
-VERSION = "V1.0"                      # ← 从 COPYRIGHT_INFO.md 复制
+# ====== 用户配置区域 (从 COPYRIGHT_INFO.md 复制) ======
+SOFTWARE_NAME = "你的软件全称V1.0"   # ← 修改为实际软件全称
+VERSION = "V1.0"                      # ← 修改为实际版本号
 INPUT_FILE = "source_final.txt"
 OUTPUT_FILE = "source_code.pdf"
-LINES_PER_PAGE = 50
+LINES_PER_PAGE = 50                   # 每页最少50行
+# ==================================================
 
-# 注册中文字体 (macOS 自带宋体)
-try:
-    pdfmetrics.registerFont(TTFont('SimSun', '/System/Library/Fonts/Songti.ttc', subfontIndex=0))
-    CN_FONT = 'SimSun'
-except:
-    try:
-        pdfmetrics.registerFont(TTFont('SimSun', '/System/Library/Fonts/STSong.ttf'))
-        CN_FONT = 'SimSun'
-    except:
-        print("⚠️ 未找到宋体字体, 使用默认字体")
-        CN_FONT = 'Helvetica'
+# 注册中文字体 (多路径尝试)
+FONT_PATHS = [
+    '/System/Library/Fonts/Songti.ttc',         # macOS 13+
+    '/System/Library/Fonts/STSong.ttf',          # 旧版 macOS
+    '/System/Library/Fonts/PingFang.ttc',        # 苹方 (备选)
+    '/Library/Fonts/Songti.ttc',
+    '/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc',  # Linux
+    'C:/Windows/Fonts/simsun.ttc',               # Windows
+]
+
+CN_FONT = None
+for font_path in FONT_PATHS:
+    if os.path.exists(font_path):
+        try:
+            font_name = os.path.splitext(os.path.basename(font_path))[0]
+            pdfmetrics.registerFont(TTFont(font_name, font_path, subfontIndex=0))
+            CN_FONT = font_name
+            print(f"✅ 使用字体: {font_path}")
+            break
+        except Exception as e:
+            try:
+                # 某些 .ttc 需要不传 subfontIndex
+                pdfmetrics.registerFont(TTFont(font_name, font_path))
+                CN_FONT = font_name
+                print(f"✅ 使用字体: {font_path} (默认索引)")
+                break
+            except:
+                continue
+
+if CN_FONT is None:
+    print("⚠️ 未找到中文字体, PDF 中文可能显示为方块")
+    print("   手动方案: 用 Word/Pages 打开 source_final.txt → 排版 → 导出 PDF")
+    CN_FONT = 'Helvetica'
 
 # 读取源代码
-with open(INPUT_FILE, 'r', encoding='utf-8', errors='replace') as f:
+if not os.path.exists(INPUT_FILE):
+    print(f"❌ 输入文件不存在: {INPUT_FILE}")
+    print("   请先运行 Step 2.2 的源代码提取脚本")
+    sys.exit(1)
+
+with open(INPUT_FILE, 'r', encoding='utf-8', errors='strict') as f:
     lines = f.readlines()
 
 total_lines = len(lines)
 total_pages = (total_lines + LINES_PER_PAGE - 1) // LINES_PER_PAGE
 print(f"📊 {total_lines} 行 → {total_pages} 页")
 
-# 样式 (宋体 五号 ≈ 10.5pt, 1.5倍行距)
+# 样式: 宋体 五号 (10.5pt), 1.5倍行距
 style = ParagraphStyle(
     'code',
     fontName=CN_FONT,
     fontSize=10.5,
-    leading=10.5 * 1.5,       # 1.5倍行距
+    leading=10.5 * 1.5,
     leftIndent=0,
     rightIndent=0,
     spaceBefore=0,
     spaceAfter=0,
+    wordSpace=0,
 )
 
-# 页眉回调
+# 页眉回调: 左上=软件名称+版本号, 右上=页码
 def add_header_footer(canvas, doc):
     canvas.saveState()
-    canvas.setFont(CN_FONT, 8)
-    # 左上: 软件名称+版本号
-    canvas.drawString(2.5*cm, A4[1] - 1.5*cm, f"{SOFTWARE_NAME} {VERSION}")
-    # 右上: 页码
-    canvas.drawRightString(A4[0] - 2*cm, A4[1] - 1.5*cm, f"第 {canvas.getPageNumber()} 页 / 共 {total_pages} 页")
+    try:
+        canvas.setFont(CN_FONT, 8)
+    except:
+        canvas.setFont('Helvetica', 8)
+    header_y = A4[1] - 1.5 * cm
+    # 左上
+    canvas.drawString(2.5 * cm, header_y, f"{SOFTWARE_NAME} {VERSION}")
+    # 右上
+    canvas.drawRightString(A4[0] - 2 * cm, header_y,
+                           f"第 {canvas.getPageNumber()} 页 / 共 {total_pages} 页")
     canvas.restoreState()
 
 # 构建 PDF
 doc = SimpleDocTemplate(
     OUTPUT_FILE,
     pagesize=A4,
-    topMargin=2.5*cm,
-    bottomMargin=2.5*cm,
-    leftMargin=2.5*cm,
-    rightMargin=2*cm,
+    topMargin=2.5 * cm,
+    bottomMargin=2.5 * cm,
+    leftMargin=2.5 * cm,
+    rightMargin=2 * cm,
 )
 
-# 分页
+# HTML 转义辅助
+def escape_html(text):
+    return (text.replace('&', '&amp;')
+                .replace('<', '&lt;')
+                .replace('>', '&gt;')
+                .replace('"', '&quot;'))
+
+# 分页: 每 LINES_PER_PAGE 行一页
 story = []
 for i in range(0, total_lines, LINES_PER_PAGE):
     page_lines = lines[i:i + LINES_PER_PAGE]
-    page_text = '<br/>'.join(
-        line.rstrip('\n').replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-        for line in page_lines
-    )
+    page_text = '<br/>'.join(escape_html(line.rstrip('\n\r')) for line in page_lines)
     story.append(Paragraph(page_text, style))
     if i + LINES_PER_PAGE < total_lines:
         story.append(PageBreak())
 
-doc.build(story, onFirstPage=add_header_footer, onLaterPages=add_header_footer)
+try:
+    doc.build(story, onFirstPage=add_header_footer, onLaterPages=add_header_footer)
+except Exception as e:
+    print(f"❌ PDF 生成失败: {e}")
+    print("   手动方案: 用 Word/Pages 打开 source_final.txt →")
+    print("   设置 宋体五号/1.5倍行距/页边距2.5cm → 添加页眉页码 → 导出 PDF")
+    sys.exit(1)
+
 print(f"✅ PDF 已生成: {OUTPUT_FILE}")
 print(f"   文件: {OUTPUT_FILE}  ({total_pages} 页)")
+print(f"   大小: {os.path.getsize(OUTPUT_FILE) / 1024 / 1024:.1f} MB")
 ```
 
 **执行 PDF 生成**:
@@ -388,6 +454,25 @@ ls -lh source_code.pdf
 echo "📄 PDF 已生成, 请打开验证格式是否正确"
 ```
 
+**备选方案 — 手动 PDF 排版 (Python 环境不可用时)**:
+
+```
+如果 pip install reportlab 失败或 Python 不可用, 用手动方案:
+
+1. 打开 ${OUTPUT_DIR}/source_final.txt
+2. 全选复制 → 粘贴到 Microsoft Word / Apple Pages
+3. 设置格式:
+   - 字体: 宋体 (SimSun) / 宋体-简
+   - 字号: 五号 (10.5pt)
+   - 行距: 1.5 倍
+   - 页边距: 上/下 2.5cm, 左 2.5cm, 右 2cm
+4. 添加页眉:
+   - 左上: "软件全称 版本号"
+   - 右上: "第 X 页 / 共 Y 页"
+5. 每页确保 ≥ 50 行代码
+6. 导出为 PDF → 保存为 source_code.pdf
+```
+
 ### Step 2.4 — 源代码文档质量检查
 
 > **[VALIDATE]** Claude Code 逐项验证
@@ -397,14 +482,19 @@ echo "📄 PDF 已生成, 请打开验证格式是否正确"
 □ PDF 页数 ≥ 60 页 (或全部提交时 ≥ (总行数/50) 页)
 □ 每页左上角有 "软件名称 + 版本号"
 □ 每页右上角有 "第 X 页 / 共 Y 页"
-□ 包含程序入口文件 (App.swift / main() / index.js 等)
-□ 包含程序结尾 (程序结束逻辑 / 最后的 class / 导出语句)
+□ 前30页必须从程序开头开始 (第1页 = 项目第一个源文件的第一行)
+    → 典型开头: @main / main() / AppDelegate / 入口文件
+□ 后30页必须包含程序结尾 (最后几页 = 项目最后几个源文件的末尾)
+    → 典型结尾: 最后的 end / 导出语句 / 程序退出逻辑
+□ 前30页和后30页之间是连续的, 不能有跳跃或删减
 □ 包含核心业务逻辑 (不是只有 UI 框架代码)
-□ 不同文件之间有分隔标识
+    → 必须有数据操作/业务判断/算法等实质性代码
+□ 不同文件之间有分隔标识 (// ===== 文件: xxx.swift =====)
 □ 无第三方库代码 (Pods/node_modules 已排除)
 □ 无敏感信息 (密码/密钥/token/IP 地址已移除或脱敏)
 □ 代码中版本号与申请版本号一致
 □ 打开 PDF 可正常阅读, 无乱码
+□ 文件大小 ≤ 30MB (超过则压缩或增加每页行数至55-60行)
 ```
 
 ---
@@ -497,7 +587,21 @@ ${软件全称} 是一款面向 [目标用户] 的 [功能描述]。
 - 网站: [https://xxx.com]
 ```
 
-### Step 3.2 — 截图清单 & 获取
+### Step 3.2 — 已发表证明 (如适用)
+
+> 仅当软件 "已发表" (已在 App Store/应用商店上架) 时需要
+
+```
+提供以下任一证明:
+□ App Store Connect 后台截图 (显示 App 名称、首次上线日期)
+□ 应用商店 App 详情页 URL 截图
+□ 首次上架确认邮件截图
+□ 其他能证明首次发表时间的材料
+
+将此证明截图放入用户手册附录或作为独立 PDF 上传
+```
+
+### Step 3.3 — 截图清单 & 获取
 
 ```
 最少需要 5 张截图 (建议 8-10 张):
