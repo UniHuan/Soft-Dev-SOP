@@ -111,6 +111,20 @@ echo "  3. 已签署开发者协议"
 
 # 🗓️ DAY 1 — 从零到可运行 MVP
 
+### 📌 快速跳转指南 (哪些 Phase 可以跳过)
+
+> 以下 Phase 标注了 `(可选)`，如你的 App 不需要对应功能，直接跳到下一个 Phase 的编译验证即可。
+
+```
+Phase 3.5 NetworkService   → 纯本地 App 可跳过 (数据全在 RelationalStore)
+Phase 3.6 AuthService      → 不需要登录可跳过 (华为账号登录)
+Phase 4.1 DI 容器          → ViewModel < 3 个可跳过 (简单 App 用直接 new)
+Phase 10.3 IAP             → 免费 App 可跳过 (华为应用内支付)
+Phase 10.3b Paywall        → 免费 App 可跳过 (付费墙 UI)
+```
+
+> **Claude Code 必须在跳过前确认**: `[DIALOG] "根据 SPECS.md 确认跳过 Phase X.Y? [Y/n]"`
+
 ---
 
 ## Phase 0: 环境初始化 (0:00 - 0:30)
@@ -150,15 +164,15 @@ echo "
 "
 ```
 
-### Step 0.2 — 验证项目结构
+### Step 0.2 — 验证项目 & 更新 app.json5
 
-> **[SHELL]** 确认项目文件完整，首次构建验证
+> **[SHELL]** + **[READ]** + **[EDIT]** 确认项目文件完整，更新应用配置，首次构建
 
 ```bash
 source /tmp/sop_harmony.env 2>/dev/null
 cd ${PROJECT_DIR}
 
-# 验证关键文件
+# 验证关键文件 (DevEco Studio 自动生成)
 echo "=== 项目结构验证 ==="
 ls AppScope/app.json5 && echo "✅ app.json5"
 ls entry/src/main/module.json5 && echo "✅ module.json5"
@@ -166,8 +180,27 @@ ls entry/src/main/ets/pages/Index.ets && echo "✅ Index.ets"
 ls entry/src/main/ets/entryability/EntryAbility.ets && echo "✅ EntryAbility.ets"
 ls build-profile.json5 && echo "✅ build-profile.json5"
 ls oh-package.json5 && echo "✅ oh-package.json5"
+```
 
-# 首次构建
+**[READ]** 打开 `AppScope/app.json5` → **[EDIT]** 更新应用名称和图标:
+
+```json5
+{
+  "app": {
+    "bundleName": "com.example.myharmonyapp",   // ← 确认与创建时一致
+    "vendor": "example",
+    "versionCode": 1000000,
+    "versionName": "1.0.0",
+    "icon": "$media:app_icon",                   // ← Phase 9 将替换图标
+    "label": "$string:app_name"                   // ← 在 resources/base/element/string.json 中定义
+  }
+}
+```
+
+> **说明**: `.ets` 文件是 ArkTS (Extended TypeScript) 源码文件，HarmonyOS 专用。每个 `.ets` 文件可包含多个 `@Component` 或 `@Entry` 结构体。
+
+```bash
+# 首次构建 (验证 DevEco Studio 创建的模板可编译)
 echo "=== 首次构建验证 ==="
 ./hvigorw assembleHap 2>&1 | tail -10
 # [DEBUG] 如有错误, 自动分析并修复
@@ -442,10 +475,13 @@ export class Utils {
 }
 ```
 
-### Step 2.3 — Index 页面更新
+### Step 2.3 — Index 页面更新 (Stub 占位)
+
+> **[READ]** 打开 `entry/src/main/ets/pages/Index.ets` → **[EDIT]** 替换为以下 Stub 版本。
+> **Stub 说明**: 此版本确保 Phase 2-4 可编译。Phase 5 将用完整 UI 覆盖替换。
 
 ```typescript
-// entry/src/main/ets/pages/Index.ets — 应用首页 (Stub)
+// entry/src/main/ets/pages/Index.ets — 应用首页 (Stub, Phase 5 替换)
 import { DesignTokens } from '../common/DesignTokens'
 
 @Entry
@@ -1392,7 +1428,7 @@ find entry/src/main/ets -name "*.ets" -exec wc -l {} \; | awk '{sum+=$1} END {pr
 
 ### Step 6.2 — 单元测试 (Hypium)
 
-> **[WRITE]** `entry/src/test/TaskViewModel.test.ets` — 4 条核心用例
+> **[WRITE]** 测试文件放在 DevEco Studio 自动创建的 `entry/src/ohosTest/ets/test/` 目录下
 
 ```typescript
 import { describe, it, expect } from '@ohos/hypium'
@@ -2152,24 +2188,48 @@ git add -A && git commit -m "Phase 10: Release build v1.0.0 signed"
 
 ## Phase 11: AGC 云测试 (Day 2, 4:30-5:30)
 
-> **[DIALOG]** 云测试必须通过才能上架
+> **[DIALOG]** + **[DEBUG]** 云测试必须全部通过才能上架。这是华为审核的硬性要求。
 
 ```
-[DIALOG] AGC 云测试流程:
+═══════════════════════════════════════
+AGC 云测试 — 分步操作 (用户手动)
+═══════════════════════════════════════
 
-1. 打开 AGC → 我的应用 → 版本 → 上传 .app 包
-2. 上传后 → 云测试 → 新建测试
-3. 选择测试类型:
-   □ 兼容性测试 (≥ 5 款设备)
-   □ 稳定性测试 (Monkey ≥ 30min)
-   □ 性能测试 (冷启动 < 2s)
-   □ 安全测试
-   □ 权限测试
-4. 等待测试完成 (约 30 分钟)
-5. 全部通过后 → 进入 Phase 12
+1. 上传应用包:
+   □ 打开 AGC (https://developer.huawei.com → AppGallery Connect)
+   □ 我的应用 → 选择应用 → "版本" 标签
+   □ 点击 "上传" → 选择 Phase 10 构建的 .app 文件
+   □ 等待上传完成 (约 2-5 分钟)
 
-如有失败:
-- [DEBUG] 查看测试报告 → 定位问题 → 修复代码 → 重新构建 → 重新测试
+2. 发起云测试:
+   □ 左侧菜单 → "质量" → "云测试"
+   □ 点击 "新建测试"
+   □ 选择测试类型 (建议全选):
+     ✓ 兼容性测试 (≥ 5 款主流设备: Pura 70/Mate 60/nova 12...)
+     ✓ 稳定性测试 (Monkey 测试, ≥ 30 分钟, 无崩溃)
+     ✓ 性能测试 (冷启动 < 2s, 内存 < 500MB, CPU < 30%)
+     ✓ 安全测试 (无明文密码、无敏感日志、权限使用正确)
+     ✓ 权限测试 (声明的权限与实际调用一致)
+   □ 点击 "开始测试"
+
+3. 查看结果 (约 30-60 分钟):
+   □ 测试完成 → AGC 站内信通知
+   □ 点击测试报告 → 查看详情
+   □ 全部通过 ✅ → 进入 Phase 12
+   □ 有失败 ❌ → 见下方处理
+
+═══════════════════════════════════════
+测试失败处理 (Claude Code [DEBUG])
+═══════════════════════════════════════
+
+常见失败 & 修复:
+  □ 兼容性: 某设备崩溃 → 查看崩溃日志 → 修复 → 重构建 → 重测
+  □ 稳定性: Monkey 崩溃 → 查看 ANR/崩溃堆栈 → 修复空指针/数组越界
+  □ 性能: 启动慢 → 延迟初始化非首屏内容; 内存高 → 检查内存泄漏
+  □ 安全: 明文密码 → 使用 HUKS 加密; 日志敏感 → 移除 console.log
+  □ 权限: 未声明 → 在 module.json5 补充权限声明
+
+重新测试: 修复后 → 重新 ./hvigorw assembleApp → 重新上传 → 重新测试
 ```
 
 ---
