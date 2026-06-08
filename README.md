@@ -22,6 +22,18 @@
 | [鸿蒙 App 2 天开发 SOP](harmonyos/HarmonyOS_App_2Day_Development_SOP.md) | ArkTS + DevEco Studio，13 Phase 全自动执行 | 2,449 |
 | [鸿蒙开发规范](harmonyos/HarmonyOS_Development_Guide.md) | ArkTS/ArkUI/Stage 模型完整规范 + iOS 概念映射 | 1,883 |
 
+### Android 开发
+
+| 文档 | 说明 | 行数 |
+|------|------|------|
+| [Android App 2 天开发 SOP](android/Android_App_2Day_Development_SOP.md) | Kotlin + Jetpack Compose，14 Phase 全自动执行 | 398 |
+
+### CI/CD
+
+| 文档 | 说明 | 行数 |
+|------|------|------|
+| [CI/CD 集成 SOP](cicd/CI_CD_Integration_SOP.md) | GitHub Actions + hvigor CI 双平台自动化 | 240 |
+
 ### 软著 & 全流程
 
 | 文档 | 说明 | 行数 |
@@ -65,12 +77,12 @@ Claude Code 会读取对应的 SOP 文件，按 Phase 顺序全自动执行。
 
 | 指标 | 数值 |
 |------|------|
-| SOP 文档数 | 6 |
-| 总行数 | 12,580+ |
+| SOP 文档数 | 8 |
+| 总行数 | 14,000+ |
 | Phase/Step 总数 | 80+ Phase，200+ Step |
 | 技能标注密度 | 每个 Step 1-3 个技能标签 |
 | 编译验证点 | 30+ 处 |
-| 覆盖平台 | iOS、HarmonyOS、通用软著 |
+| 覆盖平台 | iOS、Android、HarmonyOS、通用软著、CI/CD |
 
 ---
 
