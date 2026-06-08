@@ -703,7 +703,46 @@ PART 2 完成条件
 
 ---
 
-> **流水线版本**: 1.0.0
+## 📋 鸿蒙 → 软著流水线 (HarmonyOS 版)
+
+> **适配**: 鸿蒙 App 开发完成后，复用开发阶段产物快速完成软著申请。
+
+### 鸿蒙版材料映射
+
+| 鸿蒙开发产出 | 软著用途 | 获取方式 |
+|------------|---------|---------|
+| SPECS.md (功能/技术栈) | 申请表 开发目的/编程语言 | 直接复制 |
+| DESIGN_SPECS.md (运行环境) | 申请表 硬件/软件环境 | 直接复制 |
+| DevEco Previewer 截图 | 用户手册功能截图 | 每个页面截图 |
+| 全部 .ets 源码 | 源代码文档 (PDF) | find *.ets → 排版 |
+| 项目结构 (entry/src/main/ets/) | 设计说明书模块划分 | 直接引用 |
+| AGC 上架日期 | 首次发表日期 | 精确填入 |
+| hvigorw 构建产物路径 | 版本号锚点 | `app.json5 versionName` |
+
+### 关键差异 (vs iOS → 软著)
+
+```
+鸿蒙 vs iOS 软著申请差异:
+  □ 软件分类号: 选 "30213-0000 移动应用软件" (同 iOS)
+  □ 编程语言: 填 "ArkTS" (非 Swift)
+  □ 开发环境: 填 "DevEco Studio 5.0, HarmonyOS SDK API 12"
+  □ 软件环境: 填 "HarmonyOS NEXT 5.0+"
+  □ 硬件环境: 填 "华为手机/平板, 麒麟芯片"
+  □ 源代码格式: .ets 文件 (TypeScript 超集)
+  □ 用户手册截图: DevEco Previewer 截图 (不是 App Store 截图)
+  □ 已发表证明: AGC 上架截图 (不是 App Store Connect)
+
+执行步骤:
+  1. 鸿蒙 SOP Phase 13 完成后 → git tag v1.0.0
+  2. 进入 copyright/ 目录 → 执行 Software_Copyright_Application_SOP.md
+  3. 源代码提取: SOURCE_DIR = 项目 entry/src/main/ets/
+  4. 截图: 复用 DevEco Previewer 截图
+  5. 其他流程相同
+```
+
+---
+
+> **流水线版本**: 1.1.0
 > **最后更新**: 2026-06-08
-> **关联文档**: `../ios/iOS_App_2Day_Development_SOP.md` + `../copyright/Software_Copyright_Application_SOP.md`
+> **关联文档**: `../ios/iOS_App_2Day_Development_SOP.md` + `../copyright/Software_Copyright_Application_SOP.md` + `../harmonyos/HarmonyOS_App_2Day_Development_SOP.md`
 > **核心理念**: 开发阶段的每一项产出都是软著申请的材料，不要做两次

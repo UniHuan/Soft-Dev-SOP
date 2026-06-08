@@ -776,6 +776,81 @@ source /tmp/sop_harmony.env 2>/dev/null && cd ${PROJECT_DIR}
 git add -A && git commit -m "Phase 3.5: NetworkService (optional)"
 ```
 
+### Phase 3.6: 华为账号登录 (可选, 如 SPECS 需要登录)
+
+> **[WRITE]** + **[DIALOG]** 集成华为账号 Kit (Account Kit)
+
+```typescript
+// entry/src/main/ets/service/AuthService.ets
+import { authentication } from '@kit.AccountKit'
+import { BusinessError } from '@kit.BasicServicesKit'
+
+export class AuthService {
+  private static readonly HUAWEI_ACCOUNT_SCOPE = ['profile', 'openid']
+
+  // 华为账号登录
+  static async signIn(): Promise<{ success: boolean; openId?: string }> {
+    try {
+      const request: authentication.HuaweiIDProvider = {
+        scopes: this.HUAWEI_ACCOUNT_SCOPE,
+        state: Math.random().toString(36)
+      }
+      const result = await authentication.signIn(request)
+      if (result && result.openId) {
+        console.info(`Sign in success: ${result.openId}`)
+        return { success: true, openId: result.openId }
+      }
+      return { success: false }
+    } catch (err) {
+      const error = err as BusinessError
+      console.error(`Sign in failed: ${error.code} ${error.message}`)
+      return { success: false }
+    }
+  }
+
+  // 静默登录 (已授权用户)
+  static async silentSignIn(): Promise<{ success: boolean; openId?: string }> {
+    try {
+      const request: authentication.HuaweiIDProvider = {
+        scopes: this.HUAWEI_ACCOUNT_SCOPE,
+        state: Math.random().toString(36)
+      }
+      const result = await authentication.silentSignIn(request)
+      if (result && result.openId) {
+        return { success: true, openId: result.openId }
+      }
+      return { success: false }
+    } catch (err) {
+      return { success: false }
+    }
+  }
+
+  // 退出登录
+  static async signOut(): Promise<void> {
+    try {
+      await authentication.signOut()
+    } catch (err) {
+      console.error(`Sign out failed: ${JSON.stringify(err)}`)
+    }
+  }
+}
+```
+
+```json5
+// module.json5 中添加 Account Kit 权限
+"requestPermissions": [
+  { "name": "ohos.permission.GET_BUNDLE_INFO" }
+]
+// 同时需要在 AGC → 我的应用 → 开发 → API 管理 中开通 Account Kit
+```
+
+> **[DIALOG]** 使用华为账号登录需要在 AGC 中开通 Account Kit 服务，配置 OAuth 回调。
+
+```bash
+# [GIT]
+git add -A && git commit -m "Phase 3.6: AuthService - Huawei Account Kit (optional)"
+```
+
 ---
 
 ## Phase 4: ViewModel 层 (4:30 - 6:00)
@@ -906,6 +981,23 @@ git add -A && git commit -m "Phase 4.1: DI container"
 ## Phase 5: UI 层开发 ← 按原型实现 (6:00 - 7:30)
 
 > **[GENERATE]** + **[WRITE]** + **[REVIEW]** + **[DEBUG]** 1:1 还原原型
+
+### Step 5.0 — 原型映射 & 清理
+
+> **[READ]** + **[EDIT]** Phase 2 创建了 Stub Index 页面，Phase 5 用完整实现替换。
+> 原型中的设计值必须与 DesignTokens 一一对应。
+
+```
+原型 → 生产代码映射:
+  原型硬编码颜色 → DesignTokens.COLOR_XXX
+  原型硬编码字号 → DesignTokens.FONT_XXX
+  原型硬编码间距 → DesignTokens.SPACING_XXX
+  原型硬编码圆角 → DesignTokens.RADIUS_XXX
+  原型假数据 → TaskViewModel 真实数据
+  原型 @Entry struct → @Component export struct (组件化)
+```
+
+**[READ]** 打开 `prototype/screens/HomePrototype.ets` → 确认设计细节 → **[EDIT]** 开始实现。
 
 ### Step 5.1 — 任务卡片组件
 
@@ -1505,32 +1597,61 @@ git add -A && git commit -m "Phase 8: Settings + search + gesture"
 # 至少 3 张: 首页、功能页、设置页
 ```
 
-### Step 9.3 — 元数据生成
+### Step 9.3 — 元数据自动生成
 
-> **[WRITE]** 根据 SPECS.md 生成:
+> **[GENERATE]** + **[WRITE]** Claude Code 从 SPECS.md + DESIGN_SPECS.md 自动提取并生成 AGC 元数据
 
-```markdown
-# AGC 元数据
+```bash
+source /tmp/sop_harmony.env 2>/dev/null && cd ${PROJECT_DIR}
+mkdir -p agc_metadata
 
-## 应用名称
-${DISPLAY_NAME} (2-30字符)
+# [WRITE] 生成应用描述 (从 SPECS.md 核心功能提取)
+cat > agc_metadata/app_description.txt << DESC
+【应用简介】
+${DISPLAY_NAME} 是一款专注于 [核心功能描述] 的鸿蒙原生应用。
 
-## 应用描述 (50-8000字符)
-[从 SPECS.md 核心功能生成]
+【核心功能】
+$(grep -A5 "核心功能" SPECS.md 2>/dev/null | sed 's/^/- /' || echo "- [请补充功能描述]")
 
-## 隐私政策 URL
-[用户提供]
+【适用场景】
+$(grep -A3 "适用场景\|目标用户" SPECS.md 2>/dev/null | sed 's/^/- /' || echo "- [请补充适用场景]")
 
-## 应用分类
-工具 / 效率 / (根据实际选择)
+【特点】
+- 鸿蒙原生 ArkUI 设计，流畅体验
+- 支持手机、平板、2in1 多设备
+- 本地数据安全存储
+DESC
+echo "✅ 应用描述已生成: agc_metadata/app_description.txt"
 
-## 年龄分级
-4+ / 12+ / 16+ / 18+
+# [WRITE] 生成关键词 (从 SPECS.md + DESIGN_SPECS.md 提取)
+cat > agc_metadata/keywords.txt << KW
+$(grep "功能\|Feature" SPECS.md 2>/dev/null | head -5 | sed 's/.*: *//' | tr '\n' ',')
+鸿蒙,ArkUI,效率,工具
+KW
+echo "✅ 关键词已生成"
+
+# [WRITE] 生成隐私政策模板
+cat > agc_metadata/privacy_policy.md << 'PRIVACY'
+# ${DISPLAY_NAME} 隐私政策
+
+## 信息收集
+本应用仅收集必要的用户数据以提供核心功能。
+
+## 数据存储
+所有数据存储在用户设备本地，不上传至服务器。
+
+## 权限说明
+$(grep -A3 "permission" entry/src/main/module.json5 2>/dev/null | sed 's/.*name.*://' || echo "- 仅申请功能必需权限")
+
+## 联系方式
+如有隐私相关问题，请联系: [用户邮箱]
+PRIVACY
+echo "✅ 隐私政策已生成: agc_metadata/privacy_policy.md"
 ```
 
 ```bash
 # [GIT]
-git add -A && git commit -m "Phase 9: AppGallery assets & metadata"
+git add -A && git commit -m "Phase 9: AppGallery assets & auto-generated metadata"
 ```
 
 ---
@@ -1934,6 +2055,73 @@ Phase 5 额外的视觉验证:
 
 ---
 
-> **SOP 版本**: 1.0.0 | **最后更新**: 2026-06-08
+### F. 开发故障排除 FAQ
+
+```
+Q: 执行 ./hvigorw 报 "command not found"
+A: 确认在项目根目录 (有 hvigorw 文件的那一层) 执行;
+   确认文件有执行权限: chmod +x hvigorw;
+   DevEco Studio 创建的 hvigorw 是 Gradle wrapper，需 Java 环境。
+
+Q: ./hvigorw assembleHap 报 "SDK not found"
+A: DevEco Studio 安装后需配置 SDK 路径:
+   1. DevEco Studio → Preferences → SDK
+   2. 确认 HarmonyOS SDK 已下载 (API 12+)
+   3. 确认 local.properties 文件中的 sdk.dir 指向正确路径
+
+Q: Previewer 不显示，一片空白
+A: 1. 等待构建完成 (Previewer 需要编译)
+   2. 确认 .ets 文件无编译错误
+   3. 检查 @Entry 装饰器存在
+   4. 尝试: Build → Clean Project → 重新打开 Previewer
+
+Q: 模拟器启动失败
+A: 1. DevEco Studio → Tools → Device Manager
+   2. 确认已创建 Phone 模拟器 (API 12+)
+   3. 检查系统虚拟化是否开启 (Intel VT-x / AMD-V)
+   4. macOS: 确认 /etc/hosts 包含 127.0.0.1 localhost
+
+Q: 数据库操作崩溃
+A: 1. 确认 DatabaseService.init(context) 在 EntryAbility.onCreate 中调用
+   2. Context 必须从 Ability 获取，不能自己 new
+   3. 所有 DB 操作需在 init 完成后 (await 异步)
+   4. 检查表名/字段名与 SQL CREATE TABLE 一致
+
+Q: List 不显示数据
+A: 1. 确认 ForEach 第三个参数 keyGenerator 返回唯一值
+   2. 确认 @State 变量变化会触发 UI 刷新
+   3. 查看 logcat/hilog 有无错误信息
+   4. 对于 async 数据加载，确保在 then() 回调中更新 @State
+
+Q: 签名配置后构建失败
+A: 1. 确认 .p12 密钥库密码正确
+   2. 确认 .p7b 证书链文件存在
+   3. 确认签名算法为 SHA256withECDSA
+   4. 检查 .p12 文件路径 (相对于 entry/ 目录)
+   5. 或直接在 DevEco Studio → Build → Generate Key 重新生成
+
+Q: 如何调试 ArkTS 代码?
+A: 1. DevEco Studio → 设置断点 → Debug 模式运行
+   2. console.info() 输出到 logcat
+   3. 真机: hdc hilog | grep "TAG"
+   4. 模拟器: 底部 Log 面板查看
+```
+
+### G. 全流程小白自测 (提交前 5 分钟检查)
+
+```
+□ 1. ./hvigorw assembleHap 编译通过 (无 ERROR)
+□ 2. Previewer 中界面显示正常 (非白屏/非崩溃)
+□ 3. 列表有数据时显示列表, 无数据时显示空状态
+□ 4. 添加按钮能跳转详情页
+□ 5. 详情页能保存并返回
+□ 6. 筛选按钮切换后列表内容变化
+□ 7. 设置页开关能正常切换
+□ 8. AGC 云测试全部通过
+□ 9. app_icon.png 已放 AppScope/resources/base/media/
+□ 10. main_pages.json 包含所有页面路径
+```
+
+> **SOP 版本**: 1.1.0 | **最后更新**: 2026-06-08
 > **关联文档**: `HarmonyOS_Development_Guide.md`
-> **技术栈**: ArkTS + ArkUI + Stage 模型 + RelationalStore
+> **技术栈**: ArkTS + ArkUI + Stage 模型 + RelationalStore + Huawei Account Kit
