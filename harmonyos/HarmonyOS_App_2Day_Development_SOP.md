@@ -1195,7 +1195,157 @@ struct Index {
 }
 ```
 
-### Step 5.3 — HIG 适配 (鸿蒙设计规范)
+### Step 5.3 — 导航模式 (鸿蒙 HIG)
+
+```typescript
+// ✅ Tab 导航 — 鸿蒙标准: 3-5 个标签, 底部定位
+@Entry
+@Component
+struct MainTabs {
+  @State currentIndex: number = 0
+  private tabsController: TabsController = new TabsController()
+
+  build() {
+    Tabs({ barPosition: BarPosition.End, controller: this.tabsController }) {
+      TabContent() { HomePage() }
+        .tabBar(this.tabBuilder('首页', 0))
+      TabContent() { DiscoverPage() }
+        .tabBar(this.tabBuilder('发现', 1))
+      TabContent() { ProfilePage() }
+        .tabBar(this.tabBuilder('我的', 2))
+    }.onChange((index: number) => { this.currentIndex = index })
+  }
+
+  @Builder tabBuilder(text: string, index: number) {
+    Column() {
+      Text(index === 0 ? '📋' : index === 1 ? '🔍' : '👤').fontSize(22)
+      Text(text).fontSize(10)
+        .fontColor(this.currentIndex === index ? DesignTokens.COLOR_PRIMARY : DesignTokens.COLOR_TEXT_SECONDARY)
+    }
+  }
+}
+
+// ✅ router 跳转 — pushUrl 带参数, router.back() 返回
+// ✅ Navigation + NavPathStack — 大项目推荐 (见 HarmonyOS_Development_Guide.md 7.1)
+```
+
+### Step 5.4 — 模态 & 反馈模式
+
+```typescript
+// ✅ AlertDialog — 关键确认 (删除/不可逆操作前)
+AlertDialog.show({
+  title: '删除任务',
+  message: '此操作不可撤销，确定删除？',
+  primaryButton: { value: '取消', action: () => {} },
+  secondaryButton: {
+    value: '删除',
+    fontColor: DesignTokens.COLOR_ERROR,
+    action: () => { this.viewModel.deleteTask(task.id) }
+  }
+})
+
+// ✅ CustomDialog — 自定义弹窗 (复杂表单/详情)
+@CustomDialog
+struct AddTaskDialog {
+  controller: CustomDialogController
+  @State inputText: string = ''
+
+  build() {
+    Column() {
+      Text('新建任务').fontSize(20).fontWeight(FontWeight.Bold)
+      TextInput({ placeholder: '任务标题', text: this.inputText })
+        .onChange((v: string) => { this.inputText = v })
+      Row({ space: 12 }) {
+        Button('取消').onClick(() => { this.controller.close() })
+        Button('确定').onClick(() => {
+          // 保存任务
+          this.controller.close()
+        }).backgroundColor(DesignTokens.COLOR_PRIMARY)
+      }
+    }.padding(24)
+  }
+}
+
+// ✅ Toast/提示 — 轻量反馈 (非阻断性)
+import { promptAction } from '@kit.ArkUI'
+promptAction.showToast({ message: '任务已添加', duration: 2000 })
+
+// ✅ 鸿蒙反馈分级:
+// 操作成功 → Toast (2秒自动消失)
+// 关键确认 → AlertDialog (需用户明确操作)
+// 多选项 → ActionSheet (底部弹出)
+// 错误提示 → 内嵌红色文本 + Toast
+// 加载中 → LoadingProgress
+```
+
+### Step 5.5 — 引导页 & 空状态
+
+```typescript
+// ✅ 引导页 (首次启动时显示, 可跳过)
+@Entry
+@Component
+struct OnboardingPage {
+  @StorageProp('has_onboarded') hasOnboarded: boolean = false
+  @State currentPage: number = 0
+
+  build() {
+    Column() {
+      Swiper() {
+        // 引导页 1
+        Column({ space: 24 }) {
+          Image($r('sys.media.ohos_ic_public_notes')).width(80).height(80)
+          Text('欢迎使用').fontSize(28).fontWeight(FontWeight.Bold)
+          Text('高效管理你的日常任务').fontSize(16).fontColor(DesignTokens.COLOR_TEXT_SECONDARY)
+        }
+        // 引导页 2
+        Column({ space: 24 }) {
+          Image($r('sys.media.ohos_ic_public_calendar')).width(80).height(80)
+          Text('智能提醒').fontSize(28).fontWeight(FontWeight.Bold)
+          Text('不再错过任何重要事项').fontSize(16).fontColor(DesignTokens.COLOR_TEXT_SECONDARY)
+        }
+      }
+      .indicator(true).loop(false).layoutWeight(1)
+
+      Row({ space: 16 }) {
+        Button('跳过').fontColor(DesignTokens.COLOR_TEXT_SECONDARY).backgroundColor(Color.Transparent)
+          .onClick(() => { this.completeOnboarding() })
+        Button('开始使用').backgroundColor(DesignTokens.COLOR_PRIMARY).borderRadius(24).height(50)
+          .onClick(() => { this.completeOnboarding() })
+      }.padding(32).width('100%')
+    }
+  }
+
+  completeOnboarding(): void {
+    AppStorage.setOrCreate('has_onboarded', true)
+    // 跳转到主页 (需要 EntryAbility 判断)
+  }
+}
+
+// ✅ 空状态 (列表为空时显示)
+// 已在 Step 5.2 Index.ets 中包含: LoadingProgress / 暂无数据 / 有数据 三态切换
+
+// ✅ ContentUnavailableView (鸿蒙等价: 自定义空状态组件)
+@Component
+struct EmptyStateView {
+  @Prop icon: Resource = $r('sys.media.ohos_ic_public_notes')
+  @Prop title: string = '暂无内容'
+  @Prop message: string = ''
+  action?: () => void
+  actionTitle?: string
+
+  build() {
+    Column({ space: DesignTokens.SPACING_MD }) {
+      Image(this.icon).width(64).height(64).fillColor(DesignTokens.COLOR_TEXT_TERTIARY)
+      Text(this.title).fontSize(DesignTokens.FONT_BODY).fontColor(DesignTokens.COLOR_TEXT_SECONDARY)
+      if (this.message) {
+        Text(this.message).fontSize(DesignTokens.FONT_CAPTION).fontColor(DesignTokens.COLOR_TEXT_TERTIARY)
+      }
+    }
+  }
+}
+```
+
+### Step 5.6 — HIG 适配 (鸿蒙设计规范)
 
 ```
 ✅ 所有文本使用 fp 单位 (自适应缩放)
@@ -1205,6 +1355,9 @@ struct Index {
 ✅ 触摸目标 ≥ 48vp (鸿蒙标准)
 ✅ 深色模式自动适配 (系统处理)
 ✅ 支持横竖屏 (module.json5: "orientation": "auto_rotation")
+□ Tab 导航 3-5 个标签, 底部定位
+□ 模态弹窗有明确关闭方式
+□ 引导页可选/可跳过
 ```
 
 ```bash
@@ -1224,28 +1377,88 @@ git add -A && git commit -m "Phase 5: UI layer - TaskCard + Index + HIG complian
 
 ## Phase 6: 自测 & Day 1 收尾 (7:30 - 8:00)
 
-> **[SHELL]** + **[VALIDATE]** + **[GIT]**
+> **[SHELL]** + **[VALIDATE]** + **[WRITE]** + **[GIT]**
+
+### Step 6.1 — 编译 & 代码统计
 
 ```bash
-# 构建验证
-./hvigorw assembleHap 2>&1 | tail -5
+source /tmp/sop_harmony.env 2>/dev/null && cd ${PROJECT_DIR}
+./hvigorw assembleHap 2>&1 | tail -10
 
-# 检查代码质量
-echo "=== ArkTS 代码检查 ==="
+echo "=== ArkTS 代码统计 ==="
 find entry/src/main/ets -name "*.ets" | wc -l | xargs echo "源文件数:"
 find entry/src/main/ets -name "*.ets" -exec wc -l {} \; | awk '{sum+=$1} END {print "总行数: " sum}'
+```
 
-# Day 1 报告
-cat > DAY1_REPORT.md << EOF
+### Step 6.2 — 单元测试 (Hypium)
+
+> **[WRITE]** `entry/src/test/TaskViewModel.test.ets` — 4 条核心用例
+
+```typescript
+import { describe, it, expect } from '@ohos/hypium'
+import { TaskViewModel, FilterOption } from '../../main/ets/viewmodel/TaskViewModel'
+import { TaskItem, Priority } from '../../main/ets/model/TaskItem'
+
+export default function TaskViewModelTest() {
+  describe('TaskViewModel', () => {
+    it('filter_should_return_all_when_filter_is_all', () => {
+      const vm = new TaskViewModel()
+      vm.tasks = [
+        { id:'1', title:'A', isCompleted:false, priority:0, description:'', dueDate:0, createdAt:0, completedAt:0 },
+        { id:'2', title:'B', isCompleted:true, priority:0, description:'', dueDate:0, createdAt:0, completedAt:0 }
+      ]
+      vm.selectedFilter = FilterOption.ALL
+      expect(vm.filteredTasks.length).assertEqual(2)
+    })
+
+    it('filter_should_return_active_only', () => {
+      const vm = new TaskViewModel()
+      vm.tasks = [
+        { id:'1', title:'A', isCompleted:false, priority:0, description:'', dueDate:0, createdAt:0, completedAt:0 },
+        { id:'2', title:'B', isCompleted:true, priority:0, description:'', dueDate:0, createdAt:0, completedAt:0 }
+      ]
+      vm.selectedFilter = FilterOption.ACTIVE
+      expect(vm.filteredTasks.length).assertEqual(1)
+    })
+
+    it('search_should_filter_by_title', () => {
+      const vm = new TaskViewModel()
+      vm.tasks = [
+        { id:'1', title:'Hello', isCompleted:false, priority:0, description:'', dueDate:0, createdAt:0, completedAt:0 },
+        { id:'2', title:'World', isCompleted:false, priority:0, description:'', dueDate:0, createdAt:0, completedAt:0 }
+      ]
+      vm.searchText = 'Hello'
+      expect(vm.filteredTasks.length).assertEqual(1)
+    })
+
+    it('empty_tasks_should_return_empty_filtered', () => {
+      const vm = new TaskViewModel()
+      vm.tasks = []
+      expect(vm.filteredTasks.length).assertEqual(0)
+    })
+  })
+}
+```
+
+> **[DIALOG]** 在 DevEco Studio: 右键 `entry/src/test` → Run 'Tests' → 4 条全部通过
+
+### Step 6.3 — Day 1 报告 & 提交
+
+```bash
+cat > DAY1_REPORT.md << 'EOF'
 # Day 1 完成报告
-- Stage 模型: ✅ 已搭建
-- 数据层: ✅ RelationalStore + Preferences
-- ViewModel: ✅ TaskViewModel
-- UI 层: ✅ 首页 + TaskCard 组件
+- Stage 模型: ✅ EntryAbility + module.json5
+- 数据层: ✅ RelationalStore(CRUD) + Preferences + NetworkService
+- 认证: ✅ AuthService(华为账号, 可选)
+- ViewModel: ✅ TaskViewModel(筛选/搜索/CRUD)
+- DI 容器: ✅ AppContainer
+- UI 层: ✅ TaskCard + Index + 导航 + 模态 + 引导 + 空状态
+- HIG: ✅ fp/vp, 48vp触摸, 深色模式, 横竖屏
 - 编译: ✅ ./hvigorw assembleHap 通过
+- 测试: ✅ 4条Hypium用例通过
 EOF
 
-git add -A && git commit -m "Day 1 complete: MVP with Stage + MVVM + RelationalStore"
+git add -A && git commit -m "Day 1 complete: Stage + MVVM + RelationalStore + full HIG UI patterns"
 ```
 
 ---
