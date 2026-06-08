@@ -4,7 +4,7 @@
 > **目标**: 从零代码 → App Store 上架 → 软著登记证书，一条流水线
 > **总周期**: 开发 2 天 + App Store 审核 1-3 天 + 软著审查 ~30 工作日
 > **核心理念**: 开发阶段产出的材料直接复用为软著申请材料，零重复劳动
-> **前置条件**: 已阅读并理解 `iOS_App_2Day_Development_SOP.md` 和 `Software_Copyright_Application_SOP.md`
+> **前置条件**: 已阅读并理解 `ios/../ios/iOS_App_2Day_Development_SOP.md` 和 `copyright/../copyright/Software_Copyright_Application_SOP.md`
 
 ---
 
@@ -79,7 +79,7 @@ Day 2 — 从 MVP 到可发布
 
 # PART 1: iOS App 开发 & 上架
 
-> **详细步骤**: 参见 `iOS_App_2Day_Development_SOP.md` (5410 行)
+> **详细步骤**: 参见 `../ios/../ios/iOS_App_2Day_Development_SOP.md` (5410 行)
 
 ---
 
@@ -299,7 +299,7 @@ Phase 5  UI 层 (6:00-7:30)
 
 # PART 2: 软件著作权申请
 
-> **详细步骤**: 参见 `Software_Copyright_Application_SOP.md` (1269 行)
+> **详细步骤**: 参见 `../copyright/../copyright/Software_Copyright_Application_SOP.md` (1269 行)
 > **关键原则**: 最大限度复用 PART 1 的产出，避免重复劳动
 
 ---
@@ -347,7 +347,7 @@ Phase 5  UI 层 (6:00-7:30)
 │ 3. 提取源代码:                                  │
 │    SOURCE_DIR="${PROJECT_DIR}/${PROJECT_NAME}"  │
 │    bash copyright_materials/extract_source.sh  │
-│    (运行 Software_Copyright_Application_SOP.md  │
+│    (运行 ../copyright/Software_Copyright_Application_SOP.md  │
 │     中 Phase 2.2 的完整脚本)                     │
 │                                                │
 │ 4. 生成 PDF:                                   │
@@ -454,7 +454,7 @@ Phase 5  UI 层 (6:00-7:30)
 
 ## P2-Phase 5-8: 核验 → 提交 → 领证
 
-> **[VALIDATE]** + **[DIALOG]** 按 Software_Copyright_Application_SOP.md 执行
+> **[VALIDATE]** + **[DIALOG]** 按 ../copyright/Software_Copyright_Application_SOP.md 执行
 
 ```
 Phase 5: 五维度核验 (15 分钟)
@@ -545,7 +545,7 @@ Phase 8: 证书归档 (领证后)
 ═══════════════════════════════════════════════════════════
 阶段 A: PART 1 开发 (Day 1-2)
 ═══════════════════════════════════════════════════════════
-1. 执行 iOS_App_2Day_Development_SOP.md Phase 0 → Phase 13
+1. 执行 ../ios/iOS_App_2Day_Development_SOP.md Phase 0 → Phase 13
 2. 产出: App Archive 已上传到 App Store Connect
 3. 产出: git tag v1.0.0 已创建 (Phase 13 Step 13.1)
 4. 产出: 所有项目变量持久化在 /tmp/sop_project.env
@@ -570,7 +570,7 @@ Phase 8: 证书归档 (领证后)
 阶段 C: PART 2 软著申请 (上架后 ~1 小时 + 审查等待)
 ═══════════════════════════════════════════════════════════
 1. 加载 PART 1 环境变量
-2. 执行 Software_Copyright_Application_SOP.md Phase 1 → Phase 5
+2. 执行 ../copyright/Software_Copyright_Application_SOP.md Phase 1 → Phase 5
    (材料准备, 大量复用 PART 1)
 3. Phase 6 在线提交 (需要用户手动操作 ASC/版权中心)
 4. Phase 7 审查追踪 (每周检查, Claude Code 提醒)
@@ -705,5 +705,5 @@ PART 2 完成条件
 
 > **流水线版本**: 1.0.0
 > **最后更新**: 2026-06-08
-> **关联文档**: `iOS_App_2Day_Development_SOP.md` + `Software_Copyright_Application_SOP.md`
+> **关联文档**: `../ios/iOS_App_2Day_Development_SOP.md` + `../copyright/Software_Copyright_Application_SOP.md`
 > **核心理念**: 开发阶段的每一项产出都是软著申请的材料，不要做两次
