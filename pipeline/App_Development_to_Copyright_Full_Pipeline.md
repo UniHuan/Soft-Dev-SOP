@@ -18,7 +18,8 @@
 Day 1 — 从零到可运行 MVP
 ├─ Phase 0   环境初始化 → 产出: .xcodeproj, Git, 项目变量
 ├─ Phase 1   需求确认 → 产出: SPECS.md
-├─ Phase 1.5 高保真原型 → 产出: DESIGN_SPECS.md, Prototype/
+├─ Phase 1.2 PRD 文档  → 产出: PRD.md (功能规格/屏幕规格/验收标准)
+├─ Phase 1.5 高保真原型 → 产出: DESIGN_SPECS.md, Prototype/ (基于 PRD)
 ├─ Phase 2   架构搭建 → Stub 视图 + App 入口
 ├─ Phase 3   数据层 → SwiftData Models + StorageService + modelContainer
 ├─ Phase 4   ViewModel + DI 容器
@@ -111,12 +112,12 @@ Day 2 — 从 MVP 到可发布
 产出物: SPECS.md
 
 ┌─ 📌 软著复用 ──────────────────────────────────┐
-│ SPECS.md 中的以下字段直接填入软著申请表:        │
+│ SPECS.md → PRD.md → 软著申请表:                 │
 │  - App 名称 → 软件全称                         │
-│  - 核心功能 → 开发目的/功能列表                  │
-│  - 目标用户 → 面向领域                          │
+│  - 功能规格(MoSCoW) → 开发目的/功能列表          │
+│  - 用户画像 → 面向领域                          │
 │  - 技术栈 → 编程语言/开发环境                    │
-│  - 盈利模式 → 定价策略(软著不需要,但有用)        │
+│  - PRD 数据模型 → 软著设计说明书模块划分         │
 └───────────────────────────────────────────────┘
 ```
 
@@ -742,7 +743,175 @@ PART 2 完成条件
 
 ---
 
-> **流水线版本**: 1.1.0
+> **流水线版本**: 1.2.0
 > **最后更新**: 2026-06-08
 > **关联文档**: `../ios/iOS_App_2Day_Development_SOP.md` + `../copyright/Software_Copyright_Application_SOP.md` + `../harmonyos/HarmonyOS_App_2Day_Development_SOP.md`
 > **核心理念**: 开发阶段的每一项产出都是软著申请的材料，不要做两次
+
+---
+
+## 🤖 一键材料提取脚本
+
+> Claude Code 执行此脚本自动从开发项目中提取软著所需全部材料。
+
+### iOS 版
+
+```bash
+#!/bin/bash
+# [SHELL] 一键提取 iOS 项目软著材料
+# 使用: bash extract_copyright_materials_ios.sh
+
+source /tmp/sop_project.env 2>/dev/null
+PROJECT_DIR="${PROJECT_DIR:-.}"
+OUTPUT="./copyright_materials"
+mkdir -p ${OUTPUT}/{source,screenshots,docs}
+
+echo "═══════════════════════════════════════"
+echo "  一键提取 iOS → 软著材料"
+echo "═══════════════════════════════════════"
+
+# 1. 源代码 (保留文件结构)
+echo "📄 [1/5] 提取源代码..."
+SOURCE_DIR="${PROJECT_DIR}/${PROJECT_NAME:-}"
+find "${SOURCE_DIR}" -name "*.swift" -not -path "*/Pods/*" -not -path "*/.build/*" | sort > ${OUTPUT}/source_files.txt
+FILE_COUNT=$(wc -l < ${OUTPUT}/source_files.txt)
+echo "   源文件: ${FILE_COUNT} 个"
+
+# 带文件头标识
+> ${OUTPUT}/source/full_source.txt
+while IFS= read -r f; do
+  rel="${f#${SOURCE_DIR}/}"
+  echo "// ===== 文件: ${rel} =====" >> ${OUTPUT}/source/full_source.txt
+  grep -v '^\s*$' "$f" >> ${OUTPUT}/source/full_source.txt 2>/dev/null || true
+  echo "" >> ${OUTPUT}/source/full_source.txt
+done < ${OUTPUT}/source_files.txt
+TOTAL_LINES=$(wc -l < ${OUTPUT}/source/full_source.txt)
+echo "   总行数: ${TOTAL_LINES}"
+echo "   ✅ 源代码提取完成 → ${OUTPUT}/source/full_source.txt"
+
+# 2. 截图 (从 fastlane 或手动目录)
+echo "📸 [2/5] 收集截图..."
+if [ -d "fastlane/screenshots" ]; then
+  cp fastlane/screenshots/*.png ${OUTPUT}/screenshots/ 2>/dev/null
+  SCREENSHOT_COUNT=$(ls ${OUTPUT}/screenshots/*.png 2>/dev/null | wc -l)
+  echo "   截图: ${SCREENSHOT_COUNT} 张 (来源: fastlane)"
+else
+  # 检查是否有模拟器截图
+  if [ -f "screenshot_visual_check.png" ]; then
+    cp screenshot_visual_check.png ${OUTPUT}/screenshots/
+    echo "   截图: 1 张 (来源: 模拟器截图)"
+  else
+    echo "   ⚠️ 未找到截图, 请手动补充"
+  fi
+fi
+
+# 3. 项目文档
+echo "📋 [3/5] 收集项目文档..."
+cp SPECS.md ${OUTPUT}/docs/ 2>/dev/null && echo "   ✅ SPECS.md"
+cp DESIGN_SPECS.md ${OUTPUT}/docs/ 2>/dev/null && echo "   ✅ DESIGN_SPECS.md"
+cp PRD.md ${OUTPUT}/docs/ 2>/dev/null && echo "   ✅ PRD.md"
+
+# 4. App Store 信息
+echo "📱 [4/5] 提取 App Store 元数据..."
+if [ -f "fastlane/metadata/zh-Hans/description.txt" ]; then
+  cp fastlane/metadata/zh-Hans/description.txt ${OUTPUT}/docs/appstore_description.txt
+  echo "   ✅ App Store 描述"
+fi
+BUNDLE_ID=$(grep "BUNDLE_ID" /tmp/sop_project.env 2>/dev/null | cut -d'"' -f2)
+echo "   Bundle ID: ${BUNDLE_ID:-未知}"
+echo "   上架日期: (请手动填入 ASC Ready for Sale 日期)"
+
+# 5. 生成软著信息摘要
+echo "📝 [5/5] 生成软著信息摘要..."
+cat > ${OUTPUT}/COPYRIGHT_INFO_AUTO.md << INFOEOF
+# 软著申请信息 — 自动提取
+
+## 软件信息 (从项目自动提取)
+- 建议全称: \${PROJECT_NAME:-MyApp} [功能描述]软件V1.0.0
+- 版本号: 1.0.0
+- 编程语言: Swift $(swift --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+')
+- 硬件环境: iPhone 12及以上机型
+- 软件环境: iOS $(/usr/libexec/PlistBuddy -c 'Print MinimumOSVersion' ${SOURCE_DIR}/Resources/Info.plist 2>/dev/null || echo "17.0")+
+- 代码行数: ${TOTAL_LINES}
+- 分类号: 30213-0000 (移动应用软件)
+
+## 需用户手动补充
+- 申请人姓名/证件号
+- 软件详细描述
+- 开发完成日期
+- 首次发表日期 (App Store 上架日期)
+- 隐私政策 URL
+INFOEOF
+echo "   ✅ 软著信息摘要 → ${OUTPUT}/COPYRIGHT_INFO_AUTO.md"
+
+echo ""
+echo "═══════════════════════════════════════"
+echo "  ✅ 材料提取完成!"
+echo "  📂 输出目录: ${OUTPUT}/"
+echo "     ├── source/   (源代码)"
+echo "     ├── screenshots/ (截图)"
+echo "     └── docs/     (项目文档)"
+echo ""
+echo "  下一步: 执行 copyright/Software_Copyright_Application_SOP.md Phase 2-5"
+echo "═══════════════════════════════════════"
+```
+
+### 鸿蒙版
+
+```bash
+#!/bin/bash
+# [SHELL] 一键提取鸿蒙项目软著材料
+source /tmp/sop_harmony.env 2>/dev/null
+PROJECT_DIR="${PROJECT_DIR:-.}"
+OUTPUT="./copyright_materials"
+mkdir -p ${OUTPUT}/{source,screenshots,docs}
+
+echo "═══════════════════════════════════════"
+echo "  一键提取 鸿蒙 → 软著材料"
+echo "═══════════════════════════════════════"
+
+# 1. ArkTS 源代码
+echo "📄 [1/4] 提取 ArkTS 源代码..."
+SOURCE_DIR="${PROJECT_DIR}/entry/src/main/ets"
+find "${SOURCE_DIR}" -name "*.ets" -not -path "*/oh_modules/*" | sort > ${OUTPUT}/source_files.txt
+echo "   源文件: $(wc -l < ${OUTPUT}/source_files.txt) 个"
+
+> ${OUTPUT}/source/full_source.txt
+while IFS= read -r f; do
+  rel="${f#${PROJECT_DIR}/}"
+  echo "// ===== 文件: ${rel} =====" >> ${OUTPUT}/source/full_source.txt
+  grep -v '^\s*$' "$f" >> ${OUTPUT}/source/full_source.txt 2>/dev/null || true
+  echo "" >> ${OUTPUT}/source/full_source.txt
+done < ${OUTPUT}/source_files.txt
+echo "   总行数: $(wc -l < ${OUTPUT}/source/full_source.txt)"
+echo "   ✅ 完成"
+
+# 2. 截图 (Previewer 手动截取)
+echo "📸 [2/4] 截图提示..."
+echo "   ⚠️ 鸿蒙截图需在 DevEco Previewer 中手动截取各页面"
+echo "   需要: 首页/详情页/设置页 至少各1张"
+
+# 3. 项目文档
+echo "📋 [3/4] 收集项目文档..."
+cp SPECS.md ${OUTPUT}/docs/ 2>/dev/null
+cp DESIGN_SPECS.md ${OUTPUT}/docs/ 2>/dev/null
+cp PRD.md ${OUTPUT}/docs/ 2>/dev/null
+echo "   ✅ 文档收集完成"
+
+# 4. 软著信息
+echo "📝 [4/4] 生成软著信息摘要..."
+cat > ${OUTPUT}/COPYRIGHT_INFO_AUTO.md << INFOEOF
+# 软著申请信息 — 自动提取 (鸿蒙)
+
+- 编程语言: ArkTS
+- 开发环境: DevEco Studio 5.0, HarmonyOS SDK API 12
+- 软件环境: HarmonyOS NEXT 5.0+
+- 硬件环境: 华为手机/平板, 麒麟芯片
+- 分类号: 30213-0000 (移动应用软件)
+INFOEOF
+echo "   ✅ 完成"
+
+echo "═══════════════════════════════════════"
+echo "  ✅ 鸿蒙材料提取完成 → ${OUTPUT}/"
+echo "═══════════════════════════════════════"
+```
