@@ -70,12 +70,55 @@
 
 | 工具 | 用途 |
 |------|------|
-| **DevEco Studio** | 官方 IDE (基于 IntelliJ) |
-| **hdc** | 鸿蒙设备连接工具 (类似 adb) |
+| **DevEco Studio** | 官方 IDE (基于 IntelliJ)，下载: developer.huawei.com → 开发 → DevEco Studio |
+| **hdc** | 鸿蒙设备连接工具 (类似 adb)，位于 `$DEVECO_SDK_DIR/toolchains/hdc` |
+| **hvigor** | 构建系统 (类似 Gradle)，命令: `hvigorw assembleApp` |
 | **ArkCompiler** | ArkTS 编译器 (方舟编译器) |
-| **Previewer** | 实时预览器 |
+| **Previewer** | 实时预览器，IDE 内置 |
 | **Inspector** | UI 层级调试工具 |
 | **Profiler** | 性能分析工具 |
+
+### 1.4 最小可运行项目 (Hello World)
+
+```bash
+# 创建项目
+# 方式 1: DevEco Studio → New Project → Empty Ability → API 12+
+# 方式 2: 命令行 (需先安装 DevEco Studio 和 hvigor)
+
+# 项目结构 (自动生成)
+# MyApp/
+# ├── AppScope/app.json5           # 应用级配置
+# ├── entry/                        # 主模块
+# │   ├── src/main/ets/pages/Index.ets
+# │   ├── src/main/ets/entryability/EntryAbility.ets
+# │   └── src/main/module.json5
+# ├── build-profile.json5           # 构建配置
+# ├── hvigorfile.ts                 # 构建入口
+# └── oh-package.json5              # 依赖声明
+```
+
+```typescript
+// 最简页面: entry/src/main/ets/pages/Index.ets
+@Entry
+@Component
+struct Index {
+  @State message: string = 'Hello HarmonyOS'
+
+  build() {
+    Column() {
+      Text(this.message)
+        .fontSize(24)
+        .fontWeight(FontWeight.Bold)
+      Button('点击')
+        .onClick(() => { this.message = '你好, 鸿蒙!' })
+        .margin({ top: 16 })
+    }
+    .width('100%')
+    .height('100%')
+    .justifyContent(FlexAlign.Center)
+  }
+}
+```
 
 ---
 
@@ -388,47 +431,58 @@ AppScope/                       # 应用全局配置
 └── app.json5                   # 应用 bundleName/versionCode/icon
 ```
 
-### 4.2 UIAbility 生命周期
+### 4.2 UIAbility 生命周期 & 启动模式
 
 ```typescript
 // entryability/EntryAbility.ets
+import { UIAbility, Want, AbilityConstant } from '@kit.AbilityKit'
+import { window } from '@kit.ArkUI'
+
 export default class EntryAbility extends UIAbility {
-  // 创建时 (加载页面)
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
-    hilog.info(0x0000, 'EntryAbility', 'onCreate')
-    // 初始化全局服务、数据库等
+    // 初始化全局服务、数据库等 (仅调用一次)
   }
 
-  // 销毁时 (进程被杀)
   onDestroy(): void {
-    hilog.info(0x0000, 'EntryAbility', 'onDestroy')
     // 清理资源
   }
 
-  // 显示在屏幕 (进入前台)
   onForeground(): void {
-    hilog.info(0x0000, 'EntryAbility', 'onForeground')
-    // 恢复 UI、刷新数据
+    // 进入前台: 恢复 UI、刷新数据
   }
 
-  // 隐藏到后台
   onBackground(): void {
-    hilog.info(0x0000, 'EntryAbility', 'onBackground')
-    // 保存状态、释放大内存
+    // 进入后台: 保存状态、释放大内存
   }
 
-  // 窗口创建
   onWindowStageCreate(windowStage: window.WindowStage): void {
-    windowStage.loadContent('pages/Index',
-      (err, data) => {
-        if (err.code) {
-          hilog.error(0x0000, 'EntryAbility', 'Failed to load content')
-          return
-        }
-        // 加载成功
-      })
+    windowStage.loadContent('pages/Index', (err) => {
+      if (err.code) {
+        console.error(`Failed to load: ${err.code}`)
+        return
+      }
+    })
+  }
+
+  onWindowStageDestroy(): void {
+    // 窗口销毁
   }
 }
+```
+
+**启动模式 (launchType)**:
+
+| 模式 | 说明 | 适用场景 |
+|------|------|---------|
+| `singleton` | 全局唯一实例 (默认) | 大多数应用 |
+| `multiton` | 每次启动创建新实例 | 文档编辑器 (多窗口) |
+| `specified` | 按 key 复用实例 | 需要按参数区分实例 |
+
+```json5
+// module.json5
+"abilities": [{
+  "launchType": "singleton"  // 或 "multiton" / "specified"
+}]
 ```
 
 ### 4.3 module.json5 关键配置
@@ -467,16 +521,18 @@ export default class EntryAbility extends UIAbility {
 export class TaskItem {
   id: string = ''
   title: string = ''
-  priority: Priority = Priority.MEDIUM
+  priority: number = 0
   isCompleted: boolean = false
-  createdAt: Date = new Date()
+  createdAt: number = Date.now()
 }
 
-// ViewModel — 业务逻辑 + 状态
+// ViewModel — 业务逻辑 + 状态 (API 11 兼容写法)
+import { DatabaseService } from '../service/DatabaseService'
+
 export class TaskViewModel {
-  @Trace tasks: TaskItem[] = []
-  @Trace isLoading: boolean = false
-  @Trace selectedFilter: FilterOption = FilterOption.ALL
+  tasks: TaskItem[] = []
+  isLoading: boolean = false
+  selectedFilter: string = 'all'
   private service: DatabaseService = new DatabaseService()
 
   async loadTasks(): Promise<void> {
@@ -484,20 +540,19 @@ export class TaskViewModel {
     try {
       this.tasks = await this.service.fetchAll()
     } catch (e) {
-      hilog.error(0x0000, 'TaskVM', `Load failed: ${e}`)
+      console.error(`TaskVM: Load failed: ${JSON.stringify(e)}`)
     } finally {
       this.isLoading = false
     }
   }
 
   get filteredTasks(): TaskItem[] {
-    return this.tasks.filter(t => {
-      switch (this.selectedFilter) {
-        case FilterOption.ACTIVE: return !t.isCompleted
-        case FilterOption.COMPLETED: return t.isCompleted
-        default: return true
-      }
-    })
+    if (this.selectedFilter === 'active') {
+      return this.tasks.filter(t => !t.isCompleted)
+    } else if (this.selectedFilter === 'completed') {
+      return this.tasks.filter(t => t.isCompleted)
+    }
+    return this.tasks
   }
 }
 
@@ -506,26 +561,47 @@ export class TaskViewModel {
 @Component
 struct TaskListPage {
   @State viewModel: TaskViewModel = new TaskViewModel()
+  @State refreshFlag: number = 0  // 触发 UI 刷新
 
   aboutToAppear(): void {
-    this.viewModel.loadTasks()
+    this.viewModel.loadTasks().then(() => {
+      this.refreshFlag++  // 通知 UI 刷新
+    })
   }
 
   build() {
-    Navigation() {
-      List() {
-        ForEach(this.viewModel.filteredTasks,
-          (task: TaskItem) => {
-            ListItem() { TaskCard({ task: task }) }
-          },
-          (task: TaskItem) => task.id
-        )
+    Column() {
+      if (this.viewModel.isLoading) {
+        LoadingProgress()
+      } else if (this.viewModel.tasks.length === 0) {
+        Text('暂无任务').fontSize(16).fontColor('#999')
+      } else {
+        List() {
+          ForEach(this.viewModel.filteredTasks,
+            (task: TaskItem) => {
+              ListItem() {
+                Row() {
+                  Text(task.title).fontSize(16).layoutWeight(1)
+                  if (task.isCompleted) {
+                    Text('✓').fontColor('#34C759')
+                  }
+                }
+                .width('100%')
+                .padding(16)
+              }
+            },
+            (task: TaskItem) => task.id
+          )
+        }
       }
     }
-    .title('任务列表')
+    .width('100%')
+    .height('100%')
   }
 }
 ```
+
+> **注意**: 在 API 11 及以下，class 实例的属性变化不会自动触发 UI 刷新，需用 `@State` 包裹或手动触发 `refreshFlag`。API 12+ 的 `@ObservedV2` + `@Trace` 可自动追踪 class 属性变化。
 
 ---
 
@@ -803,26 +879,29 @@ struct MainTabs {
     Tabs({ barPosition: BarPosition.End, controller: this.tabsController }) {
       TabContent() {
         HomePage()
-      }.tabBar(this.tabBuilder('首页', $r('sys.symbol.house_fill'), 0))
+      }.tabBar(this.tabBuilder('首页', 0))
 
       TabContent() {
         DiscoverPage()
-      }.tabBar(this.tabBuilder('发现', $r('sys.symbol.magnifyingglass'), 1))
+      }.tabBar(this.tabBuilder('发现', 1))
 
       TabContent() {
         ProfilePage()
-      }.tabBar(this.tabBuilder('我的', $r('sys.symbol.person_fill'), 2))
+      }.tabBar(this.tabBuilder('我的', 2))
     }
     .onChange((index: number) => { this.currentIndex = index })
   }
 
-  @Builder tabBuilder(text: string, icon: Resource, index: number) {
+  @Builder tabBuilder(text: string, index: number) {
     Column() {
-      Image(icon).width(24).height(24)
-        .fillColor(index === this.currentIndex ? '#007AFF' : '#8E8E93')
-      Text(text).fontSize(10)
-        .fontColor(index === this.currentIndex ? '#007AFF' : '#8E8E93')
+      // 使用 Text 作为图标占位 (实际项目用 Image + 自定义图标)
+      Text(index === 0 ? '🏠' : index === 1 ? '🔍' : '👤')
+        .fontSize(22)
+      Text(text)
+        .fontSize(10)
+        .fontColor(this.currentIndex === index ? '#007AFF' : '#8E8E93')
     }
+    .padding({ top: 4 })
   }
 }
 ```
@@ -1054,55 +1133,82 @@ class NetworkError extends Error {
 ### 10.1 断点系统
 
 ```typescript
-// 使用 BreakpointSystem 实现响应式
-import { BreakpointSystem, BreakpointConstants } from '@ohos.breakpoint_system'
-
-// 设备断点
-enum WindowSize {
-  SM = 0,   // 手机竖屏 (< 600vp)
-  MD = 1,   // 手机横屏 / 平板竖屏 (600-840vp)
-  LG = 2,   // 平板横屏 / 桌面 (≥ 840vp)
-}
+// 设备断点 (HarmonyOS 设计规范)
+// 手机竖屏: < 600vp
+// 手机横屏 / 平板竖屏: 600-840vp
+// 平板横屏 / 2in1: ≥ 840vp
 
 @Entry
 @Component
 struct ResponsivePage {
-  @State windowSize: WindowSize = WindowSize.SM
-  @StorageLink('currentBreakpoint') currentBreakpoint: string = 'sm'
+  @State currentBreakpoint: string = 'sm'
+
+  aboutToAppear(): void {
+    // 监听窗口尺寸变化
+    window.getLastWindow(getContext(this), (err, win) => {
+      win.on('windowSizeChange', (size: window.Size) => {
+        const widthVp = size.width
+        if (widthVp >= 840) {
+          this.currentBreakpoint = 'lg'
+        } else if (widthVp >= 600) {
+          this.currentBreakpoint = 'md'
+        } else {
+          this.currentBreakpoint = 'sm'
+        }
+      })
+    })
+  }
 
   build() {
     if (this.currentBreakpoint === 'sm') {
-      // 手机: 单列布局
       SingleColumnLayout()
     } else if (this.currentBreakpoint === 'md') {
-      // 平板竖屏: 双列布局
       TwoColumnLayout()
     } else {
-      // 平板横屏/桌面: 侧边栏+内容
       ListAndDetailLayout()
     }
   }
 }
 ```
 
-### 10.2 媒体查询
+### 10.2 响应式断点监听
 
 ```typescript
-// ✅ 使用 @Styles + mediaQuery
+// ✅ 使用 onBreakpointChange 监听窗口尺寸变化
+@Entry
 @Component
-struct AdaptiveComponent {
+struct AdaptivePage {
+  @State @Watch('onBreakpointChange') currentWidth: number = 0
+  @State isTablet: boolean = false
+
+  aboutToAppear(): void {
+    // 获取当前窗口宽度
+    const windowStage = AppStorage.get<window.WindowStage>('windowStage')
+    // 或使用 display 模块
+  }
+
+  onBreakpointChange(): void {
+    this.isTablet = this.currentWidth >= 600
+  }
+
   build() {
-    Column() {
-      Text('响应式文本')
+    if (this.isTablet) {
+      // 平板: 侧边栏+内容
+      ListAndDetailLayout()
+    } else {
+      // 手机: 单列布局
+      SingleColumnLayout()
     }
-    .width('100%')
-    .padding(16)
-    // 手机横屏/平板增大内边距
-    .mediaQuery({ minWidth: 600 }, () => {
-      this.padding(32)
-    })
   }
 }
+
+// ✅ 使用 display 模块获取屏幕信息
+import display from '@ohos.display'
+
+const displayInfo = display.getDefaultDisplaySync()
+const screenWidth = displayInfo.width       // vp
+const screenHeight = displayInfo.height
+const density = displayInfo.densityPixels   // 屏幕密度
 ```
 
 ### 10.3 横竖屏适配
@@ -1432,7 +1538,74 @@ AGC 云测试 (免费, 必须通过):
 
 ---
 
-## 15. 开发检查清单
+## 15. 开发常见陷阱 & 调试
+
+### 15.1 常见编译错误速查
+
+| 错误信息 | 原因 | 解决 |
+|---------|------|------|
+| `ArkTS:ERROR: Use explicit types` | 未声明类型 | 添加类型注解 |
+| `struct has no 'build' method` | 缺少 build() | 添加 `build() {}` |
+| `ForEach missing keyGenerator` | 缺少第三个参数 | 补充 `(item) => item.id` |
+| `Cannot find module '@ohos.xxx'` | 导入路径错误或未声明依赖 | 检查 oh-package.json5 |
+| `Object literal must include all properties` | 对象字面量缺少必需属性 | 补全所有属性 |
+| `Argument of type 'string' is not assignable to 'ResourceStr'` | 类型不匹配 | 使用 `$r()` 或类型转换 |
+
+### 15.2 常用 import 速查
+
+```typescript
+// 核心 Kit (HarmonyOS NEXT 使用 Kit 化导入)
+import { UIAbility, Want, AbilityConstant } from '@kit.AbilityKit'
+import { window } from '@kit.ArkUI'
+import { hilog } from '@kit.PerformanceAnalysisKit'
+import { http } from '@kit.NetworkKit'
+import { relationalStore } from '@kit.ArkData'
+import { preferences } from '@kit.ArkData'
+import { display } from '@kit.ArkUI'
+import { router } from '@kit.ArkUI'
+import { notificationManager } from '@kit.NotificationKit'
+import { camera } from '@kit.CameraKit'
+import { huks } from '@kit.UniversalKeystoreKit'
+import { emitter } from '@kit.BasicServicesKit'
+import { image } from '@kit.ImageKit'
+import { fileIo } from '@kit.CoreFileKit'
+import { bundleManager } from '@kit.AbilityKit'
+
+// API 11 及以下使用旧版 @ohos 路径 (仍可用)
+// import router from '@ohos.router'
+// import http from '@ohos.net.http'
+```
+
+### 15.3 开发流程速查
+
+```bash
+# 1. 安装 DevEco Studio
+#    https://developer.huawei.com/consumer/cn/download/
+
+# 2. 创建项目
+#    DevEco Studio → New Project → Empty Ability
+#    选择: API 12+ / Stage 模型 / ArkTS
+
+# 3. 构建项目
+cd MyApp
+hvigorw assembleHap              # 构建 HAP (调试)
+hvigorw assembleApp              # 构建 APP (发布)
+
+# 4. 运行到模拟器
+#    DevEco Studio → 顶部工具栏 → 选择模拟器 → Run
+
+# 5. 运行到真机
+hdc shell                         # 连接设备
+hdc app install entry-default-signed.hap  # 安装
+
+# 6. 查看日志
+hdc hilog                         # 实时日志
+hdc hilog | grep "TaskVM"        # 过滤日志
+```
+
+---
+
+## 16. 开发检查清单
 
 ### 代码质量
 
