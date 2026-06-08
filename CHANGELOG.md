@@ -2,16 +2,30 @@
 
 ---
 
+## [1.3.0] — 2026-06-08
+
+### Added
+- **`SOP_TEMPLATE.md`** — 可复用的 SOP 编写模板 (161 行，含完整 Phase 结构)
+- **`.sop_execution_log_template.md`** — Claude Code 执行追踪日志模板
+- **鸿蒙 SOP**: AGC 审核防拒指南 (Phase 13.1)、无障碍自动扫描脚本 (Phase 8.1)
+- **CONTRIBUTING**: 完整 Phase 模板 + 新增 SOP 10 项 Checklist + 项目覆盖度表
+
+### Changed
+- 鸿蒙 SOP: 2,544 → 2,602 行
+- HarmonyOS Dev Guide: 版本号 1.0.0 → 1.1.0
+- CLAUDE.md: 新增执行日志追踪规则
+
+---
+
 ## [1.2.0] — 2026-06-08
 
 ### Added
-- **`QUICK_START.md`** — 30 秒场景决策 + 一句话触发词 + 环境准备清单
-- **鸿蒙 SOP**: 导航模式(5.3)、模态&反馈(5.4)、引导页&空状态(5.5)、单元测试(6.1-6.3)、付费墙UI(10.3b)、无障碍代码示例、app.json5 模板、.ets 扩展名说明、可选 Phase 跳过指南、AGC 云测试详细分步操作
+- **`QUICK_START.md`** — 30 秒场景决策 + 一句话触发词
+- **鸿蒙 SOP**: 导航模式(5.3)、模态&反馈(5.4)、引导页&空状态(5.5)、单元测试、付费墙UI、无障碍代码示例、可选 Phase 跳过指南
 
 ### Changed
 - 鸿蒙 SOP: 2,127 → 2,544 行
-- README: 行数更新、新增 QUICK_START 入口
-- Phase 0.2: 新增 app.json5 完整模板
+- Phase 0.2: 新增 app.json5 模板
 
 ---
 
