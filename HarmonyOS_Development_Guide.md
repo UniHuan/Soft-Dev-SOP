@@ -790,11 +790,19 @@ struct TaskListV2 {
 ### 7.1 Navigation 组件 (推荐, API 9+)
 
 ```typescript
+// ⚠️ 前置要求: 在 src/main/resources/base/profile/ 下创建 route_map.json
+// {
+//   "routerMap": [
+//     { "name": "DetailPage", "pageSourceFile": "pages/DetailPage.ets" }
+//   ]
+// }
+// 并在 module.json5 中声明: "routerMap": "$profile:route_map"
+
 // ✅ 声明式导航 (Navigation + NavPathStack)
 @Entry
 @Component
 struct MainPage {
-  @Provide('navPathStack') pageStack: NavPathStack = new NavPathStack()
+  pageStack: NavPathStack = new NavPathStack()
 
   build() {
     Navigation(this.pageStack) {
@@ -802,7 +810,6 @@ struct MainPage {
         ListItem() {
           Text('任务详情')
             .onClick(() => {
-              // push 到详情页
               this.pageStack.pushPathByName('DetailPage',
                 { taskId: '123', title: '任务标题' })
             })
@@ -810,15 +817,15 @@ struct MainPage {
       }
     }
     .title('首页')
-    .mode(NavigationMode.Stack)  // 单页面堆栈
+    .mode(NavigationMode.Stack)
   }
 }
 
-// 目标页面
+// 目标页面 (独立文件: pages/DetailPage.ets)
 @Entry
 @Component
 struct DetailPage {
-  @Consume('navPathStack') pageStack: NavPathStack
+  pageStack: NavPathStack = new NavPathStack()
   @State taskId: string = ''
   @State title: string = ''
 
@@ -826,14 +833,17 @@ struct DetailPage {
     NavDestination() {
       Column() {
         Text(this.title).fontSize(24)
-        Text(`ID: ${this.taskId}`)
+        Text(`ID: ${this.taskId}`).fontSize(14).fontColor('#999')
       }
     }
     .title(this.title)
     .onReady((context: NavDestinationContext) => {
-      // 接收路由参数
-      this.taskId = context.pathInfo?.param?.taskId ?? ''
-      this.title = context.pathInfo?.param?.title ?? ''
+      // 接收路由参数 (API 12 方式)
+      const param = context.getConfig() as Record<string, Object> | undefined
+      if (param) {
+        this.taskId = (param['taskId'] as string) ?? ''
+        this.title = (param['title'] as string) ?? ''
+      }
     })
   }
 }
@@ -924,29 +934,32 @@ struct MainTabs {
 ### 8.2 Preferences (键值存储)
 
 ```typescript
-import preferences from '@ohos.data.preferences'
+import { preferences } from '@kit.ArkData'
 
 // 初始化
 const PREFERENCES_NAME = 'app_settings'
 let prefs: preferences.Preferences
 
 async function initPreferences(context: Context): Promise<void> {
-  prefs = preferences.getPreferencesSync(context, { name: PREFERENCES_NAME })
+  // 异步获取 (API 12 推荐)
+  prefs = await preferences.getPreferences(context, PREFERENCES_NAME)
 }
 
 // 读写
 async function saveUserPreference(key: string, value: string): Promise<void> {
+  if (!prefs) return
   await prefs.put(key, value)
   await prefs.flush()  // 持久化到磁盘
 }
 
 async function loadUserPreference(key: string): Promise<string> {
+  if (!prefs) return ''
   return await prefs.get(key, '') as string
 }
 
-// 监听变化
+// 监听变化 (API 12: 通过 dataChange 事件)
 prefs.on('change', (key: string) => {
-  hilog.info(0x0000, 'Prefs', `Key ${key} changed`)
+  console.info(`Preferences: Key '${key}' changed`)
 })
 ```
 
@@ -1138,15 +1151,20 @@ class NetworkError extends Error {
 // 手机横屏 / 平板竖屏: 600-840vp
 // 平板横屏 / 2in1: ≥ 840vp
 
+import { window } from '@kit.ArkUI'
+
 @Entry
 @Component
 struct ResponsivePage {
   @State currentBreakpoint: string = 'sm'
+  private uiContext: UIContext | null = null
 
   aboutToAppear(): void {
-    // 监听窗口尺寸变化
-    window.getLastWindow(getContext(this), (err, win) => {
-      win.on('windowSizeChange', (size: window.Size) => {
+    // 获取 UIContext 并监听窗口变化
+    this.uiContext = this.getUIContext()
+    const win = window.getLastWindow(this.uiContext.getHostContext())
+    win.then((windowClass: window.Window) => {
+      windowClass.on('windowSizeChange', (size: window.Size) => {
         const widthVp = size.width
         if (widthVp >= 840) {
           this.currentBreakpoint = 'lg'
@@ -1171,65 +1189,48 @@ struct ResponsivePage {
 }
 ```
 
-### 10.2 响应式断点监听
+### 10.2 使用 display 获取设备信息
 
 ```typescript
-// ✅ 使用 onBreakpointChange 监听窗口尺寸变化
-@Entry
-@Component
-struct AdaptivePage {
-  @State @Watch('onBreakpointChange') currentWidth: number = 0
-  @State isTablet: boolean = false
+import { display } from '@kit.ArkUI'
 
-  aboutToAppear(): void {
-    // 获取当前窗口宽度
-    const windowStage = AppStorage.get<window.WindowStage>('windowStage')
-    // 或使用 display 模块
-  }
+// 获取屏幕信息 (vp 单位, 密度无关)
+const displayInfo: display.Display = display.getDefaultDisplaySync()
+const screenWidth: number = displayInfo.width         // vp
+const screenHeight: number = displayInfo.height       // vp
+const density: number = displayInfo.densityPixels     // 屏幕密度
 
-  onBreakpointChange(): void {
-    this.isTablet = this.currentWidth >= 600
-  }
+// 判断是否平板 (宽度 ≥ 600vp)
+const isTablet: boolean = screenWidth >= 600
 
-  build() {
-    if (this.isTablet) {
-      // 平板: 侧边栏+内容
-      ListAndDetailLayout()
-    } else {
-      // 手机: 单列布局
-      SingleColumnLayout()
-    }
-  }
-}
-
-// ✅ 使用 display 模块获取屏幕信息
-import display from '@ohos.display'
-
-const displayInfo = display.getDefaultDisplaySync()
-const screenWidth = displayInfo.width       // vp
-const screenHeight = displayInfo.height
-const density = displayInfo.densityPixels   // 屏幕密度
+// 监听显示变化
+display.on('change', (data: display.Display) => {
+  console.info(`Display changed: ${data.width}x${data.height}`)
+})
 ```
 
-### 10.3 横竖屏适配
+### 10.2b 横竖屏适配
 
 ```typescript
 // module.json5 声明
 "abilities": [{
-  "orientation": "auto_rotation"  // 自动旋转
+  "orientation": "auto_rotation"          // 自动旋转
+  // 或 "portrait" / "landscape"         // 锁定方向
 }]
 
 // 监听方向变化
-import display from '@ohos.display'
-
 display.on('change', (data: display.Display) => {
-  const isPortrait = display.getDefaultDisplaySync().width
+  const isPortrait: boolean = display.getDefaultDisplaySync().width
     < display.getDefaultDisplaySync().height
-  // 根据方向调整 UI
+  if (isPortrait) {
+    // 竖屏布局
+  } else {
+    // 横屏布局
+  }
 })
 ```
 
-### 10.4 资源多设备适配
+### 10.3 资源多设备适配
 
 ```
 resources/
@@ -1297,34 +1298,37 @@ Image($r('app.media.icon'))              // 自动选择密度
   - 申请与功能无关的权限
 ```
 
-### 11.3 数据加密
+### 11.3 数据加密 (HUKS)
 
 ```typescript
-import huks from '@ohos.security.huks'
+import { huks } from '@kit.UniversalKeystoreKit'
 
-// HUKS: 密钥管理
-async function generateKey(): Promise<void> {
-  const keyAlias = 'app_master_key'
+// HUKS: 生成 AES-256 密钥
+async function generateEncryptionKey(): Promise<void> {
+  const keyAlias = 'app_data_encryption_key'
   const huksOptions: huks.HuksOptions = {
     properties: [
-      { tag: huks.HuksTag.HUKS_TAG_ALGORITHM, value: huks.HuksKeyAlg.HUKS_ALG_AES },
-      { tag: huks.HuksTag.HUKS_TAG_KEY_SIZE, value: huks.HuksKeySize.HUKS_AES_KEY_SIZE_256 },
-      { tag: huks.HuksTag.HUKS_TAG_PURPOSE, value: huks.HuksKeyPurpose.HUKS_KEY_PURPOSE_ENCRYPT
-        | huks.HuksKeyPurpose.HUKS_KEY_PURPOSE_DECRYPT },
-      { tag: huks.HuksTag.HUKS_TAG_DIGEST, value: huks.HuksKeyDigest.HUKS_DIGEST_SHA256 },
+      { tag: huks.HuksTag.HUKS_TAG_ALGORITHM,
+        value: huks.HuksKeyAlg.HUKS_ALG_AES },
+      { tag: huks.HuksTag.HUKS_TAG_KEY_SIZE,
+        value: huks.HuksKeySize.HUKS_AES_KEY_SIZE_256 },
+      { tag: huks.HuksTag.HUKS_TAG_PURPOSE,
+        value: huks.HuksKeyPurpose.HUKS_KEY_PURPOSE_ENCRYPT
+             | huks.HuksKeyPurpose.HUKS_KEY_PURPOSE_DECRYPT },
+      { tag: huks.HuksTag.HUKS_TAG_DIGEST,
+        value: huks.HuksKeyDigest.HUKS_DIGEST_SHA256 },
+      { tag: huks.HuksTag.HUKS_TAG_BLOCK_MODE,
+        value: huks.HuksCipherMode.HUKS_MODE_GCM },
+      { tag: huks.HuksTag.HUKS_TAG_PADDING,
+        value: huks.HuksKeyPadding.HUKS_PADDING_NONE },
     ],
     inData: new Uint8Array(0)
   }
-
   await huks.generateKeyItem(keyAlias, huksOptions)
 }
 
-// 加密存储 (使用 HUKS 密钥)
-async function encryptData(plainText: string): Promise<Uint8Array> {
-  // 1. 从 HUKS 获取密钥
-  // 2. 使用 AES-GCM 加密
-  // 3. 存储密文到 RelationalStore/Preferences
-}
+// 加密/解密需使用 huks.initSession + huks.update + huks.finish 三步
+// 详细见: developer.huawei.com → HUKS 开发指南
 ```
 
 ---
@@ -1364,24 +1368,18 @@ aboutToDisappear(): void {
   // 取消网络请求
   this.httpRequest?.destroy()
 
-  // 移除事件监听
-  emitter.off(eventId)
+  // 移除事件监听 (使用 emitter 时)
+  // this.emitterCallback?.off()
 
   // 清空大对象
   this.largeImageData = null
 
-  // 关闭数据库连接
+  // 关闭数据库结果集
   this.resultSet?.close()
 }
 
-// ✅ 使用 WeakRef 避免循环引用
-class ViewModel {
-  private weakRef: WeakRef<Component>
-
-  setComponent(comp: Component): void {
-    this.weakRef = new WeakRef(comp)
-  }
-}
+// ✅ 避免循环引用: ViewModel 不持有 Component 引用
+// 使用 @Provide/@Consume 或回调函数代替直接引用
 ```
 
 ### 12.3 启动优化
@@ -1434,16 +1432,20 @@ export default function TaskViewModelTest() {
 ### 13.2 UI 测试
 
 ```typescript
-// 使用 UiDriver 模拟用户操作
-import { Driver, Component, UiDriver } from '@ohos.UiTest'
+// 使用 UiTest 框架模拟用户操作
+import { Driver, Component, UiDriver, ON, BY } from '@ohos.uitest'
 
 it('should navigate to detail page on task tap', async () => {
-  const driver = await UiDriver.create()
-  const taskItem = await driver.findComponent(ON.text('Task 1'))
+  const driver: UiDriver = await UiDriver.create()
+  // 查找文本为 'Task 1' 的组件并点击
+  const taskItem: Component = await driver.findComponent(ON.text('Task 1'))
   await taskItem.click()
-  const detailPage = await driver.findComponent(ON.id('detail_page'))
-  expect(detailPage).assertNotNull()
+  // 验证跳转到详情页
+  const detailTitle: Component = await driver.findComponent(ON.id('detail_title'))
+  expect(detailTitle).assertNotNull()
 })
+
+// 注意: @ohos.uitest 需要在 oh-package.json5 中声明 devDependencies
 ```
 
 ---
@@ -1554,26 +1556,28 @@ AGC 云测试 (免费, 必须通过):
 ### 15.2 常用 import 速查
 
 ```typescript
-// 核心 Kit (HarmonyOS NEXT 使用 Kit 化导入)
+// 核心 Kit (HarmonyOS NEXT API 12+ 使用 Kit 化导入)
 import { UIAbility, Want, AbilityConstant } from '@kit.AbilityKit'
 import { window } from '@kit.ArkUI'
-import { hilog } from '@kit.PerformanceAnalysisKit'
 import { http } from '@kit.NetworkKit'
-import { relationalStore } from '@kit.ArkData'
-import { preferences } from '@kit.ArkData'
+import { relationalStore, preferences } from '@kit.ArkData'
 import { display } from '@kit.ArkUI'
-import { router } from '@kit.ArkUI'
 import { notificationManager } from '@kit.NotificationKit'
-import { camera } from '@kit.CameraKit'
 import { huks } from '@kit.UniversalKeystoreKit'
-import { emitter } from '@kit.BasicServicesKit'
 import { image } from '@kit.ImageKit'
-import { fileIo } from '@kit.CoreFileKit'
-import { bundleManager } from '@kit.AbilityKit'
+import { fileIo as fs } from '@kit.CoreFileKit'
+import { cryptoFramework } from '@kit.CryptoArchitectureKit'
+import { sensor } from '@kit.SensorServiceKit'
+import { deviceInfo } from '@kit.BasicServicesKit'
 
-// API 11 及以下使用旧版 @ohos 路径 (仍可用)
+// API 11 及以下使用旧版 @ohos 路径 (API 12 仍兼容)
 // import router from '@ohos.router'
 // import http from '@ohos.net.http'
+// import preferences from '@ohos.data.preferences'
+// import relationalStore from '@ohos.data.relationalStore'
+
+// ⚠️ 注意: @kit.ArkUI 同时包含 display, router 等多个子模块
+// 不要单独 import display/router/emitter — 它们包含在 @kit.ArkUI 中
 ```
 
 ### 15.3 开发流程速查
