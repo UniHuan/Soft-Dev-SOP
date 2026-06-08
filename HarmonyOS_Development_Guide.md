@@ -344,6 +344,50 @@ class DesignTokens {
 // 7. 状态 (enabled/visibility)
 ```
 
+### 3.2b 样式复用 — @Styles & @Extend
+
+```typescript
+// ✅ @Styles — 组件内复用样式 (不支持传参)
+@Styles
+function cardStyle() {
+  .width('100%')
+  .padding(16)
+  .backgroundColor(Color.White)
+  .borderRadius(12)
+  .shadow({ radius: 8, color: '#00000010', offsetY: 2 })
+}
+
+// ✅ @Extend — 扩展系统组件样式 (支持传参, 推荐)
+@Extend(Text)
+function titleText(size: number = 20) {
+  .fontSize(size)
+  .fontWeight(FontWeight.Bold)
+  .fontColor('#1A1A1A')
+}
+
+@Extend(Button)
+function primaryButton() {
+  .type(ButtonType.Capsule)
+  .fontSize(17)
+  .fontWeight(FontWeight.Medium)
+  .backgroundColor('#007AFF')
+  .borderRadius(12)
+  .height(50)
+}
+
+// 使用
+@Component
+struct MyPage {
+  build() {
+    Column() {
+      Text('标题').titleText(24)           // @Extend
+      Button('确认').primaryButton()       // @Extend
+      Row() { /* ... */ }.cardStyle()      // @Styles (在这里用不了)
+    }
+  }
+}
+```
+
 ### 3.3 条件渲染 & 循环渲染
 
 ```typescript
@@ -372,19 +416,59 @@ ForEach(this.filteredTasks,
   (task: TaskItem) => task.id  // ← 唯一 key, 必须!
 )
 
-// ✅ LazyForEach — 懒加载大列表
+// ✅ LazyForEach — 懒加载大列表 (IDataSource 完整实现)
 class TaskDataSource implements IDataSource {
-  // 实现 totalCount(), getData(index), registerDataChangeListener()
+  private tasks: TaskItem[] = []
+  private listeners: DataChangeListener[] = []
+
+  constructor(tasks: TaskItem[]) {
+    this.tasks = tasks
+  }
+
+  totalCount(): number {
+    return this.tasks.length
+  }
+
+  getData(index: number): TaskItem {
+    return this.tasks[index]
+  }
+
+  registerDataChangeListener(listener: DataChangeListener): void {
+    if (this.listeners.indexOf(listener) < 0) {
+      this.listeners.push(listener)
+    }
+  }
+
+  unregisterDataChangeListener(listener: DataChangeListener): void {
+    const pos = this.listeners.indexOf(listener)
+    if (pos >= 0) {
+      this.listeners.splice(pos, 1)
+    }
+  }
+
+  // 数据变化时通知 LazyForEach 刷新
+  notifyDataReload(): void {
+    this.listeners.forEach(listener => listener.onDataReloaded())
+  }
+
+  notifyDataAdd(index: number): void {
+    this.listeners.forEach(listener => listener.onDataAdd(index))
+  }
 }
 
-LazyForEach(this.dataSource,
-  (task: TaskItem, index: number) => {
-    ListItem() {
-      TaskCard({ task: task })
-    }
-  },
-  (task: TaskItem) => task.id
-)
+// 使用
+private dataSource: TaskDataSource = new TaskDataSource([])
+
+build() {
+  List() {
+    LazyForEach(this.dataSource,
+      (task: TaskItem, index: number) => {
+        ListItem() { TaskCard({ task: task }) }
+      },
+      (task: TaskItem) => task.id
+    )
+  }
+}
 ```
 
 ---
@@ -1580,13 +1664,97 @@ import { deviceInfo } from '@kit.BasicServicesKit'
 // 不要单独 import display/router/emitter — 它们包含在 @kit.ArkUI 中
 ```
 
-### 15.3 开发流程速查
+### 15.3 关键配置文件速查
+
+**AppScope/app.json5 (应用级配置)**:
+```json5
+{
+  "app": {
+    "bundleName": "com.example.myapp",
+    "vendor": "example",
+    "versionCode": 1000000,    // 版本号数字 (1.0.0 → 1000000)
+    "versionName": "1.0.0",
+    "icon": "$media:app_icon",
+    "label": "$string:app_name"
+  }
+}
+```
+
+**oh-package.json5 (模块依赖)**:
+```json5
+{
+  "name": "entry",
+  "version": "1.0.0",
+  "description": "主模块",
+  "main": "Index.ets",
+  "author": "",
+  "license": "",
+  "dependencies": {
+    // 示例: 添加第三方库
+    // "@ohos/lottie": "^2.0.2"
+  }
+}
+```
+
+**build-profile.json5 (构建配置, 含签名)**:
+```json5
+{
+  "apiType": "stageMode",
+  "buildOption": {},
+  "targets": [{
+    "name": "default",
+    "runtimeOS": "HarmonyOS"
+  }],
+  "modules": [{
+    "name": "entry",
+    "srcPath": "./entry",
+    "targets": [{
+      "name": "default",
+      "applyToProducts": ["default"]
+    }]
+  }]
+}
+```
+
+**src/main/resources/base/element/string.json (字符串资源)**:
+```json
+{
+  "string": [
+    { "name": "app_name", "value": "我的应用" },
+    { "name": "module_desc", "value": "主模块描述" },
+    { "name": "internet_reason", "value": "用于访问网络数据" },
+    { "name": "camera_reason", "value": "用于拍摄照片" }
+  ]
+}
+```
+
+**src/main/resources/base/profile/main_pages.json (页面路由)**:
+```json
+{
+  "src": [
+    "pages/Index",
+    "pages/DetailPage",
+    "pages/SettingsPage"
+  ]
+}
+```
+
+**src/main/resources/base/profile/route_map.json (Navigation 路由)**:
+```json
+{
+  "routerMap": [
+    { "name": "DetailPage", "pageSourceFile": "pages/DetailPage.ets", "buildFunction": "DetailPageBuilder" }
+  ]
+}
+```
+
+### 15.4 开发流程速查
 
 ```bash
 # 1. 安装 DevEco Studio
 #    https://developer.huawei.com/consumer/cn/download/
 
-# 2. 创建项目
+# 2. 创建项目 (自动生成以上配置文件)
 #    DevEco Studio → New Project → Empty Ability
 #    选择: API 12+ / Stage 模型 / ArkTS
 
