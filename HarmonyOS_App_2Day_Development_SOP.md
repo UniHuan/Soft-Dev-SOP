@@ -27,7 +27,7 @@
 
 ```
 1. 每个 Phase 开始前 → [RESEARCH] 查阅 HarmonyOS_Development_Guide.md 对应章节
-2. 每次 WRITE 代码后 → 立即 hvigorw assembleHap → [DEBUG] 自动分析和修复编译错误
+2. 每次 WRITE 代码后 → 立即 ./hvigorw assembleHap → [DEBUG] 自动分析和修复编译错误
 3. 每个 Phase 结束前 → [VALIDATE] 对照该 Phase 验收条件逐项确认
 4. 每个 Phase 结束后 → [GIT] 提交代码
 5. 涉及不可逆操作 → [DIALOG] 必须获得用户确认
@@ -42,12 +42,12 @@
 source /tmp/sop_harmony.env 2>/dev/null
 cd ${PROJECT_DIR}
 echo "=== 编译验证 ==="
-hvigorw assembleHap 2>&1 | tail -20
+./hvigorw assembleHap 2>&1 | tail -20
 BUILD_EXIT=$?
 if [ $BUILD_EXIT -ne 0 ]; then
   echo "❌ 编译失败! [DEBUG] 自动分析错误日志..."
   # [DEBUG] Claude Code 读取 hvigorw 输出, 定位 .ets 文件和行号, 用 Edit 修复
-  hvigorw assembleHap 2>&1 | grep -E "ERROR|\.ets:[0-9]+"
+  ./hvigorw assembleHap 2>&1 | grep -E "ERROR|\.ets:[0-9]+"
 else
   echo "✅ 编译通过"
 fi
@@ -71,32 +71,40 @@ Day 1 (8h)                              Day 2 (8h)
 
 ---
 
-## ⚠️ 执行前提 (Claude Code 自动检查)
+## ⚠️ 执行前提 — 环境准备 (先阅读)
+
+> **重要**: hvigorw 不是全局命令，是项目目录下的 `./hvigorw` 包装脚本。
+> DevEco Studio 创建项目时会自动生成此脚本。所有构建命令都在项目根目录执行 `./hvigorw`。
 
 ```bash
 # [SHELL] 1. 确认 DevEco Studio 已安装
 if [ -d "$HOME/Applications/DevEco-Studio.app" ] || [ -d "/Applications/DevEco-Studio.app" ]; then
     echo "✅ DevEco Studio 已安装"
 else
-    echo "❌ 未找到 DevEco Studio, 请从 https://developer.huawei.com/consumer/cn/download/ 下载"
+    echo "❌ 未找到 DevEco Studio"
+    echo "   下载: https://developer.huawei.com/consumer/cn/download/"
+    echo "   安装: 双击 .dmg → 拖到 Applications"
     exit 1
 fi
 
-# [SHELL] 2. 确认 hvigorw 可用 (项目构建工具)
-DEVECO_SDK_DIR=$(find ~/Library -name "devecostudio" -type d 2>/dev/null | head -1)
-echo "DevEco SDK: ${DEVECO_SDK_DIR:-未找到}"
-
-# [SHELL] 3. 确认 hdc 可用 (设备连接工具)
-which hdc >/dev/null 2>&1 && echo "✅ hdc 可用" || echo "⚠️ hdc 未在 PATH 中"
-
-# [SHELL] 4. 确认 Git
+# [SHELL] 2. 确认 Git 已配置
 git --version || { echo "❌ Git 未安装"; exit 1; }
-git config user.name && git config user.email || { echo "❌ Git 未配置"; exit 1; }
+git config user.name 2>/dev/null && git config user.email 2>/dev/null || {
+    echo "❌ Git 未配置, 执行:"
+    echo "   git config --global user.name 'Your Name'"
+    echo "   git config --global user.email 'your@email.com'"
+    exit 1
+}
 
-# [SHELL] 5. 确认华为开发者账号
-echo "请确认已在 https://developer.huawei.com 注册华为开发者账号"
-# [DIALOG] 等待用户确认
+# [SHELL] 3. 确认华为开发者账号
+echo "请确认:"
+echo "  1. 已在 https://developer.huawei.com 注册账号"
+echo "  2. 已实名认证 (个人/企业)"
+echo "  3. 已签署开发者协议"
+# [DIALOG] 等待用户确认 "已确认"
 ```
+
+> **hvigorw 命令规范**: 全 SOP 中所有 `./hvigorw` 都在 `cd ${PROJECT_DIR}` 后执行。
 
 ---
 
@@ -160,7 +168,7 @@ ls oh-package.json5 && echo "✅ oh-package.json5"
 
 # 首次构建
 echo "=== 首次构建验证 ==="
-hvigorw assembleHap 2>&1 | tail -10
+./hvigorw assembleHap 2>&1 | tail -10
 # [DEBUG] 如有错误, 自动分析并修复
 ```
 
@@ -485,7 +493,7 @@ struct Index {
 # [SHELL] Phase 2 编译验证
 source /tmp/sop_harmony.env 2>/dev/null
 cd ${PROJECT_DIR}
-hvigorw assembleHap 2>&1 | tail -20
+./hvigorw assembleHap 2>&1 | tail -20
 # [DEBUG] 如有错误: 读取错误行号 → Edit 目标 .ets 文件 → 修复 → 重编译
 # [GIT]
 git add -A && git commit -m "Phase 2: Stage architecture + DesignTokens + Index stub"
@@ -661,24 +669,44 @@ export class PreferenceService {
 }
 ```
 
-### Step 3.4 — 更新 EntryAbility 初始化数据库
+### Step 3.4 — 更新 EntryAbility (完整文件)
+
+> **[READ]** 打开 `entry/src/main/ets/entryability/EntryAbility.ets` → **[EDIT]** 替换整个文件:
 
 ```typescript
-// 在 EntryAbility.onCreate() 中添加
+// entry/src/main/ets/entryability/EntryAbility.ets — 完整版 (含数据库初始化)
+import { UIAbility, Want, AbilityConstant } from '@kit.AbilityKit'
+import { window } from '@kit.ArkUI'
 import { DatabaseService } from '../service/DatabaseService'
 import { PreferenceService } from '../service/PreferenceService'
 
-onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
-  const ctx = this.context
-  DatabaseService.init(ctx)       // 初始化数据库
-  PreferenceService.init(ctx)     // 初始化偏好存储
+export default class EntryAbility extends UIAbility {
+  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+    // 初始化全局服务 (必须在 onCreate 中获取 context)
+    DatabaseService.init(this.context)
+    PreferenceService.init(this.context)
+  }
+
+  onDestroy(): void { /* 清理 */ }
+
+  onForeground(): void { /* 刷新数据 */ }
+
+  onBackground(): void { /* 保存状态 */ }
+
+  onWindowStageCreate(windowStage: window.WindowStage): void {
+    windowStage.loadContent('pages/Index', (err) => {
+      if (err.code) {
+        console.error(`Failed to load content: ${err.code}`)
+      }
+    })
+  }
 }
 ```
 
 ```bash
 # [SHELL] Phase 3 编译验证 (验证 Model + DatabaseService + PreferenceService 集成)
 source /tmp/sop_harmony.env 2>/dev/null && cd ${PROJECT_DIR}
-hvigorw assembleHap 2>&1 | tail -20
+./hvigorw assembleHap 2>&1 | tail -20
 # [DEBUG] 常见错误: import 路径不对 / Context 类型未声明 / 缺少 @kit.ArkData 依赖
 # [GIT]
 git add -A && git commit -m "Phase 3: Data layer - Model + RelationalStore + Preferences"
@@ -772,7 +800,7 @@ export class TaskViewModel {
 ```bash
 # [SHELL] Phase 4 编译验证
 source /tmp/sop_harmony.env 2>/dev/null && cd ${PROJECT_DIR}
-hvigorw assembleHap 2>&1 | tail -20
+./hvigorw assembleHap 2>&1 | tail -20
 # [DEBUG] 常见错误: FilterOption 导入路径 / TaskItem 属性不存在
 # [GIT]
 git add -A && git commit -m "Phase 4: ViewModel - TaskViewModel with filter/search/CRUD"
@@ -995,7 +1023,7 @@ struct Index {
 ```bash
 # [SHELL] Phase 5 编译验证
 source /tmp/sop_harmony.env 2>/dev/null && cd ${PROJECT_DIR}
-hvigorw assembleHap 2>&1 | tail -20
+./hvigorw assembleHap 2>&1 | tail -20
 # [DEBUG] 常见错误: TaskCard @Prop 类型不匹配 / @Entry 页面缺失
 # [DIALOG] 在 DevEco Studio Previewer 中打开 Index.ets → 视觉确认与原型一致
 # 用户回复 "视觉确认通过" 后继续
@@ -1013,7 +1041,7 @@ git add -A && git commit -m "Phase 5: UI layer - TaskCard + Index + HIG complian
 
 ```bash
 # 构建验证
-hvigorw assembleHap 2>&1 | tail -5
+./hvigorw assembleHap 2>&1 | tail -5
 
 # 检查代码质量
 echo "=== ArkTS 代码检查 ==="
@@ -1027,7 +1055,7 @@ cat > DAY1_REPORT.md << EOF
 - 数据层: ✅ RelationalStore + Preferences
 - ViewModel: ✅ TaskViewModel
 - UI 层: ✅ 首页 + TaskCard 组件
-- 编译: ✅ hvigorw assembleHap 通过
+- 编译: ✅ ./hvigorw assembleHap 通过
 EOF
 
 git add -A && git commit -m "Day 1 complete: MVP with Stage + MVVM + RelationalStore"
@@ -1044,7 +1072,7 @@ git add -A && git commit -m "Day 1 complete: MVP with Stage + MVVM + RelationalS
 source /tmp/sop_harmony.env 2>/dev/null && cd ${PROJECT_DIR}
 git status --short
 echo "=== Day 2 启动编译验证 ==="
-hvigorw assembleHap 2>&1 | tail -20
+./hvigorw assembleHap 2>&1 | tail -20
 # [DEBUG] 如有编译失败 → 修复再继续; 如通过 → 进入 Day 2
 echo "✅ Day 2 启动校验通过"
 ```
@@ -1159,9 +1187,9 @@ struct DetailPage {
 }
 ```
 
-### Step 7.2 — 注册路由 & 首页跳转
+### Step 7.2 — 注册路由 & 首页跳转 (精确编辑)
 
-**[READ]** 打开 `entry/src/main/resources/base/profile/main_pages.json` → **[EDIT]** 添加 DetailPage:
+**[READ]** → **[EDIT]** 打开 `entry/src/main/resources/base/profile/main_pages.json`，替换整个文件内容为:
 
 ```json
 {
@@ -1173,24 +1201,47 @@ struct DetailPage {
 }
 ```
 
-**[EDIT]** 更新 Index.ets: 任务卡片点击跳转到编辑页:
+**[READ]** 打开 `entry/src/main/ets/pages/Index.ets` → **[EDIT]**: 精确替换以下两处:
+
+**替换 1**: 找到 TaskCard 的使用位置 (搜索 `TaskCard({`)，在 `onTap` 属性处，将原来的空白回调替换为:
 
 ```typescript
-// 在 TaskCard 的 onTap 回调中:
-onTap: () => {
-  router.pushUrl({ url: 'pages/DetailPage', params: { taskId: task.id } })
-}
-
-// 添加按钮改为跳转新建页:
-Button('添加任务').onClick(() => {
-  router.pushUrl({ url: 'pages/DetailPage' })
+// 原代码: TaskCard({ task: task, onToggle: () => {...} })
+// 改为:
+TaskCard({
+  task: task,
+  onToggle: () => {
+    this.viewModel.toggleComplete(task).then(() => { this.refreshFlag++ })
+  },
+  onTap: () => {
+    router.pushUrl({ url: 'pages/DetailPage', params: { taskId: task.id } })
+  }
 })
+```
+
+**替换 2**: 找到底部的 "添加任务" Button (搜索 `添加任务`)，将 `onClick` 回调改为:
+
+```typescript
+// 原代码:
+Button('添加任务')
+  // ... 样式 ...
+  .onClick(() => {
+    this.viewModel.addTask('新任务 ' + new Date().toLocaleTimeString())
+      .then(() => { this.refreshFlag++ })
+  })
+
+// 改为:
+Button('添加任务')
+  // ... 样式保持不变 ...
+  .onClick(() => {
+    router.pushUrl({ url: 'pages/DetailPage' })
+  })
 ```
 
 ```bash
 # [SHELL] Phase 7 编译验证
 source /tmp/sop_harmony.env 2>/dev/null && cd ${PROJECT_DIR}
-hvigorw assembleHap 2>&1 | tail -20
+./hvigorw assembleHap 2>&1 | tail -20
 # [GIT]
 git add -A && git commit -m "Phase 7: DetailPage + router integration"
 ```
@@ -1254,10 +1305,12 @@ struct SettingsPage {
 }
 ```
 
-**[EDIT]** 更新 Index.ets — 添加搜索栏和长按删除:
+**[READ]** → **[EDIT]** 打开 `entry/src/main/ets/pages/Index.ets`，做两处编辑:
+
+**编辑 1**: 在 `build()` 方法中，在筛选标签 `Scroll()` 之前插入搜索栏:
 
 ```typescript
-// 在 build() 中筛选标签前添加:
+// 在 Column() 内, Text('我的任务') 之后, Scroll() 之前, 插入:
 Search({ placeholder: '搜索任务', value: this.viewModel.searchText })
   .onChange((value: string) => {
     this.viewModel.searchText = value
@@ -1265,19 +1318,32 @@ Search({ placeholder: '搜索任务', value: this.viewModel.searchText })
   })
   .width('90%')
   .margin({ top: 8, bottom: 8 })
+```
 
-// 在 TaskCard 上添加 ContextMenu (长按删除):
-.onGesture(
-  LongPressGesture().onAction(() => {
-    this.viewModel.deleteTask(task.id).then(() => { this.refreshFlag++ })
+**编辑 2**: 在 `ListItem()` 内的 `TaskCard` 组件上添加长按删除手势。找到 `TaskCard({` 所在处，在闭合 `})` 后添加:
+
+```typescript
+// 在 TaskCard 的 ListItem 上添加:
+ListItem() {
+  TaskCard({
+    task: task,
+    onToggle: () => { this.viewModel.toggleComplete(task).then(() => { this.refreshFlag++ }) },
+    onTap: () => { router.pushUrl({ url: 'pages/DetailPage', params: { taskId: task.id } }) }
   })
+}
+.gesture(
+  LongPressGesture({ repeat: false, duration: 500 })
+    .onAction(() => {
+      this.viewModel.deleteTask(task.id).then(() => { this.refreshFlag++ })
+    })
 )
+// ⚠️ 注意: .gesture 添加在 ListItem() 上, 不在 TaskCard 上
 ```
 
 ```bash
 # [SHELL] Phase 8 编译验证
 source /tmp/sop_harmony.env 2>/dev/null && cd ${PROJECT_DIR}
-hvigorw assembleHap 2>&1 | tail -20
+./hvigorw assembleHap 2>&1 | tail -20
 # [GIT]
 git add -A && git commit -m "Phase 8: Settings + search + gesture"
 ```
@@ -1393,8 +1459,8 @@ git add -A && git commit -m "Phase 9: AppGallery assets & metadata"
 ```bash
 source /tmp/sop_harmony.env 2>/dev/null && cd ${PROJECT_DIR}
 # 清理后构建发布包
-hvigorw clean
-hvigorw assembleApp 2>&1 | tail -20
+./hvigorw clean
+./hvigorw assembleApp 2>&1 | tail -20
 
 # 产物路径
 echo "=== 构建产物 ==="
@@ -1496,8 +1562,8 @@ entry/src/main/ets/
 
 ## 构建
 \`\`\`bash
-hvigorw assembleHap    # 调试
-hvigorw assembleApp    # 发布
+./hvigorw assembleHap    # 调试
+./hvigorw assembleApp    # 发布
 \`\`\`
 READMEEOF
 
@@ -1518,9 +1584,9 @@ echo "   下一步: AGC 审核通过后 → 上架 → 进入软著申请流程"
 
 ```bash
 # 构建
-hvigorw assembleHap                         # 调试 HAP
-hvigorw assembleApp                         # 发布 APP (含签名)
-hvigorw clean                               # 清理构建产物
+./hvigorw assembleHap                         # 调试 HAP
+./hvigorw assembleApp                         # 发布 APP (含签名)
+./hvigorw clean                               # 清理构建产物
 
 # 真机调试
 hdc shell                                   # 连接设备 shell
@@ -1579,18 +1645,54 @@ Phase 13  归档
 ### D. Claude Code 执行检查点
 
 ```
-每次 hvigorw assembleHap 后必须:
+每次 ./hvigorw assembleHap 后必须:
 □ 读取输出 → 判断成功/失败
 □ 失败 → 提取错误文件+行号 → Edit 修复 → 重编译 (最多 5 次)
 □ 成功 → 继续下一个 Step
 
 每个 Phase 结束前必须:
-□ hvigorw assembleHap 通过 ✅
+□ ./hvigorw assembleHap 通过 ✅
 □ git add -A + git commit ✅
 □ 用户确认 (如有 [DIALOG] 标记)
 
 Phase 5 额外的视觉验证:
-□ Previewer 打开 Index.ets → 截图 → 用户对比原型
+□ DevEco Studio 打开 entry/src/main/ets/pages/Index.ets
+□ 点击右上角 Previewer 标签 (View → Tool Windows → Previewer)
+□ 等待预览加载 → 用户对比原型 → 回复 "视觉确认通过"
+```
+
+### E. 小白操作指南 (DevEco Studio 关键操作)
+
+```
+┌─ 如何打开 Previewer ──────────────────────────┐
+│ 1. 打开任意 .ets 文件                          │
+│ 2. 点击编辑器右上角的 "Previewer" 标签          │
+│ 3. 或: View → Tool Windows → Previewer         │
+│ 4. 预览自动刷新, 无需手动构建                    │
+└──────────────────────────────────────────────┘
+
+┌─ 如何在模拟器中运行 App ───────────────────────┐
+│ 1. DevEco Studio 顶部工具栏 → 设备下拉框       │
+│ 2. 选择 "Phone" 模拟器 (首次需创建)             │
+│ 3. 点击绿色 ▶ 按钮运行                          │
+│ 4. 如无模拟器: Tools → Device Manager → 新建    │
+└──────────────────────────────────────────────┘
+
+┌─ 如何连接真机调试 ─────────────────────────────┐
+│ 1. 手机: 设置 → 关于手机 → 连续点击版本号 7次   │
+│ 2. 系统 → 开发者选项 → 开启 USB 调试             │
+│ 3. USB 连接电脑                                  │
+│ 4. 终端: hdc shell → 确认连接                   │
+│ 5. DevEco Studio 设备下拉框选择真机 → Run       │
+└──────────────────────────────────────────────┘
+
+┌─ ./hvigorw 命令速记 ──────────────────────────┐
+│ cd 项目根目录   ← 必须先进入!                    │
+│ ./hvigorw assembleHap      调试构建 (快速)      │
+│ ./hvigorw assembleApp      发布构建 (签名)      │
+│ ./hvigorw clean            清理构建产物          │
+│ ⚠️ 必须加 ./ ! hvigorw 不是全局命令              │
+└──────────────────────────────────────────────┘
 ```
 
 ---
