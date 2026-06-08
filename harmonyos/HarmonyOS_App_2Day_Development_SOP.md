@@ -1778,6 +1778,37 @@ git add -A && git commit -m "Phase 8: Settings + search + gesture"
   □ module.json5 声明 "orientation": "auto_rotation"
   □ 支持手机 + 平板 + 2in1
   □ app.json5 声明 deviceTypes: ["phone", "tablet"]
+
+✅ 无障碍代码检查清单 (Claude Code 扫描):
+  □ 所有 Image 有无障碍描述: .accessibilityText("描述")
+  □ 装饰性图像标记: .accessibilityLevel("no")
+  □ 按钮有无障碍标签: .accessibilityText("确认")
+  □ 列表项有无障碍分组: .accessibilityGroup(true)
+  □ 焦点顺序合理 (Tab 键导航)
+```
+
+```typescript
+// Claude Code 在代码中应添加的无障碍属性示例:
+
+// ✅ 图像添加描述
+Image($r('app.media.icon'))
+  .accessibilityText('任务完成状态图标')
+
+// ✅ 按钮添加标签
+Button('提交')
+  .accessibilityText('提交任务表单')
+
+// ✅ 装饰性元素隐藏
+Image($r('app.media.decoration'))
+  .accessibilityLevel('no')
+
+// ✅ 复杂组件分组 (整个卡片作为一个无障碍单元)
+Row() {
+  Text('任务标题').fontSize(16)
+  Text('优先级: 高').fontSize(12)
+}
+.accessibilityGroup(true)
+.accessibilityText('任务: 完成任务文档, 优先级: 高')
 ```
 
 ---
@@ -1983,6 +2014,119 @@ export class IAPService {
 ```
 
 > **[DIALOG]** IAP 商品需先在 AGC → 增长 → 应用内支付 中配置商品 ID
+
+### Step 10.3b — 付费墙 UI (Paywall)
+
+> **[WRITE]** 如使用 IAP，创建付费墙组件
+
+```typescript
+// entry/src/main/ets/components/PaywallView.ets
+import { IAPService } from '../service/IAPService'
+import { DesignTokens } from '../common/DesignTokens'
+import { promptAction } from '@kit.ArkUI'
+
+@CustomDialog
+export struct PaywallView {
+  controller: CustomDialogController
+  @State products: Array<{ id: string; name: string; price: string; description: string }> = []
+  @State selectedId: string = ''
+  @State isLoading: boolean = false
+
+  aboutToAppear(): void {
+    this.loadProducts()
+  }
+
+  async loadProducts(): Promise<void> {
+    this.isLoading = true
+    const infoList = await IAPService.queryProducts()
+    this.products = infoList.map(p => ({
+      id: p.productId,
+      name: p.productName,
+      price: p.price,
+      description: p.productDesc
+    }))
+    this.isLoading = false
+  }
+
+  async purchase(): Promise<void> {
+    if (!this.selectedId) return
+    this.isLoading = true
+    const success = await IAPService.purchase(this.selectedId)
+    if (success) {
+      promptAction.showToast({ message: '购买成功!', duration: 2000 })
+      this.controller.close()
+    } else {
+      promptAction.showToast({ message: '购买失败, 请重试', duration: 2000 })
+    }
+    this.isLoading = false
+  }
+
+  build() {
+    Column({ space: DesignTokens.SPACING_LG }) {
+      // 标题
+      Text('升级高级版').fontSize(24).fontWeight(FontWeight.Bold)
+
+      if (this.isLoading) {
+        LoadingProgress().color(DesignTokens.COLOR_PRIMARY)
+      } else {
+        // 商品列表
+        List({ space: DesignTokens.SPACING_SM }) {
+          ForEach(this.products, (product, index) => {
+            ListItem() {
+              Row({ space: DesignTokens.SPACING_MD }) {
+                Column({ space: 4 }) {
+                  Text(product.name).fontSize(16).fontWeight(FontWeight.Medium)
+                  Text(product.description).fontSize(12).fontColor(DesignTokens.COLOR_TEXT_SECONDARY)
+                }.alignItems(HorizontalAlign.Start).layoutWeight(1)
+                Text(product.price).fontSize(18).fontWeight(FontWeight.Bold)
+                  .fontColor(DesignTokens.COLOR_PRIMARY)
+              }
+              .width('100%').padding(16)
+              .backgroundColor(this.selectedId === product.id
+                ? DesignTokens.COLOR_PRIMARY + '15' : DesignTokens.COLOR_CARD)
+              .borderRadius(DesignTokens.RADIUS_MD)
+              .border({ width: 2, color: this.selectedId === product.id
+                ? DesignTokens.COLOR_PRIMARY : Color.Transparent })
+              .onClick(() => { this.selectedId = product.id })
+            }
+          })
+        }.layoutWeight(1)
+
+        // 购买按钮
+        Button('立即订阅').fontSize(17).fontWeight(FontWeight.Medium)
+          .backgroundColor(DesignTokens.COLOR_PRIMARY).borderRadius(DesignTokens.RADIUS_MD)
+          .height(50).width('100%')
+          .enabled(this.selectedId !== '' && !this.isLoading)
+          .onClick(() => { this.purchase() })
+
+        // 恢复购买
+        Button('恢复购买').fontSize(14).fontColor(DesignTokens.COLOR_PRIMARY)
+          .backgroundColor(Color.Transparent)
+          .onClick(async () => { await IAPService.restorePurchases() })
+
+        // 隐私 & 条款
+        Text('购买即表示同意 服务条款 和 隐私政策')
+          .fontSize(11).fontColor(DesignTokens.COLOR_TEXT_TERTIARY).textAlign(TextAlign.Center)
+      }
+    }
+    .width('100%').padding(24)
+    .backgroundColor(DesignTokens.COLOR_BG)
+  }
+}
+```
+
+```typescript
+// 在 Index.ets 或其他页面中调用:
+private paywallController: CustomDialogController = new CustomDialogController({
+  builder: PaywallView(),
+  autoCancel: true,
+  alignment: DialogAlignment.Bottom,
+  customStyle: true
+})
+
+// 触发付费墙:
+Button('升级').onClick(() => { this.paywallController.open() })
+```
 
 ### Step 10.4 — 发布构建
 
