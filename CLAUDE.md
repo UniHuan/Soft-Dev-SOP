@@ -39,6 +39,7 @@ All SOPs use 9 skill tags. When Claude Code encounters a tag, switch to the corr
 2. After every build command (`xcodebuild`, `./hvigorw`), read output and auto-fix errors (`[DEBUG]`) — never pass compile errors to user
 3. Pause at `[DIALOG]` points, wait for user confirmation
 4. Git-commit after each Phase completes
+5. **Track execution**: Copy `.sop_execution_log_template.md` to `SOP_EXECUTION_LOG.md` and update after each Phase
 
 ## Platform-Specific Rules
 
