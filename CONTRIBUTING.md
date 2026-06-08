@@ -52,3 +52,61 @@
 □ 引用路径正确 (相对路径)
 □ README.md 行数统计已更新
 ```
+
+## 完整 Phase 模板
+
+```markdown
+## Phase N: 阶段名称 (Day X, H:MM-H:MM)
+
+> **[SKILL1]** + **[SKILL2]** 该 Phase 的核心任务一句话描述
+
+### Step N.1 — 步骤标题
+
+> **[SKILL]** 该步骤的执行指引
+
+**具体操作**:
+
+```bash
+# [SHELL] 命令说明
+cd ${PROJECT_DIR}
+./hvigorw assembleHap 2>&1 | tail -10
+```
+
+```typescript
+// [WRITE] 文件路径/文件名.ets
+// 完整的、可编译的代码
+export class Example { }
+```
+
+```bash
+# [SHELL] Phase N 编译验证
+source /tmp/sop_harmony.env 2>/dev/null && cd ${PROJECT_DIR}
+./hvigorw assembleHap 2>&1 | tail -20
+# [DEBUG] 常见错误: xxx / xxx
+# [GIT]
+git add -A && git commit -m "Phase N: description of changes"
+```
+```
+
+## 项目覆盖度
+
+| 平台 | SOP 行数 | 规范文档 | Phase 数 | 技能标注 |
+|------|---------|---------|---------|---------|
+| iOS | 5,410 | HIG KB (493 行) | 16 | ✅ |
+| HarmonyOS | 2,544 | Dev Guide (1,883 行) | 13 | ✅ |
+| 软著 | 1,269 | — | 8 | ✅ |
+| 流水线 | 748 | — | — | ✅ |
+
+**新增 SOP Checklist**:
+```
+□ 1. 创建 SOP 骨架 (Phase 0 → Phase N)
+□ 2. 每个 Phase 写入 [SKILL] 标注
+□ 3. 每个 Phase 添加编译验证 bash block
+□ 4. 添加 [DEBUG] 覆盖常见错误
+□ 5. 添加附录 (命令速查/错误速查/依赖图)
+□ 6. 小白可执行验证 (零基础模拟)
+□ 7. 更新 CLAUDE.md 平台规则
+□ 8. 更新 README.md 导航
+□ 9. 更新 CHANGELOG.md
+□ 10. 更新 pipeline/ (如涉及交叉复用)
+```

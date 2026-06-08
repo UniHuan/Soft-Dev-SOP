@@ -1847,6 +1847,25 @@ Row() {
 .accessibilityText('任务: 完成任务文档, 优先级: 高')
 ```
 
+```bash
+# [SHELL] Claude Code 自动扫描无障碍缺失项
+source /tmp/sop_harmony.env 2>/dev/null && cd ${PROJECT_DIR}
+
+echo "=== 扫描缺少 accessibilityText 的 Image ==="
+grep -rn 'Image(' entry/src/main/ets/ --include="*.ets" | \
+  grep -v 'accessibilityText\|accessibilityLevel\|Preview\|//' | head -10
+
+echo "=== 扫描缺少 accessibilityText 的 Button ==="
+grep -rn 'Button(' entry/src/main/ets/ --include="*.ets" | \
+  grep -v 'accessibilityText\|//' | head -10
+
+echo "=== 扫描触摸目标 (检查是否有 width/height < 48vp 的可点击元素) ==="
+grep -rn '\.width(.*[1-3][0-9])\|\.height(.*[1-3][0-9])' entry/src/main/ets/ --include="*.ets" | \
+  grep -v '//' | head -10
+
+echo "✅ 无障碍扫描完成, 请根据结果补充无障碍属性"
+```
+
 ---
 
 ## Phase 9: AppGallery 素材 & 元数据 (Day 2, 2:00-3:30)
@@ -2349,6 +2368,45 @@ git tag -a "v1.0.0" -m "Release v1.0.0"
 
 echo "🎉 鸿蒙 App 开发完成!"
 echo "   下一步: AGC 审核通过后 → 上架 → 进入软著申请流程"
+```
+
+### Phase 13.1: AGC 审核防拒指南
+
+> **[VALIDATE]** AGC 审核 Top 8 拒绝原因 + SOP 防范
+
+```
+═══════════════════════════════════════
+AGC 审核 Top 8 拒绝原因 & 本 SOP 防范
+═══════════════════════════════════════
+
+1. ❌ 功能不完整/崩溃
+   → Phase 6 单元测试(4条) + Phase 11 云测试(兼容+稳定+性能)
+
+2. ❌ 隐私政策缺失或不可访问
+   → Phase 9.3 自动生成隐私政策 + Phase 12 curl 验证 URL
+
+3. ❌ 权限申请无说明
+   → Phase 11.1 所有敏感权限声明 { reason }
+
+4. ❌ 应用名称/图标侵权
+   → Phase 1.1 命名规范校验 + Phase 9.2 图标原创
+
+5. ❌ 描述与实际功能不符 (夸大宣传)
+   → Phase 9.3 从 SPECS.md 提取真实功能生成描述
+
+6. ❌ 包含违规内容
+   → Phase 12 内容审核自查
+
+7. ❌ 未通过云测试
+   → Phase 11 必须全部通过 (兼容性/稳定性/性能/安全/权限)
+
+8. ❌ 元服务打包超过 10MB (如发布为元服务)
+   → Phase 14.4 包大小检查
+
+═══════════════════════════════════════
+审核周期: 3-7 个工作日
+审核不通过: 查看拒绝原因 → 修复 → 重新提交
+═══════════════════════════════════════
 ```
 
 ---
