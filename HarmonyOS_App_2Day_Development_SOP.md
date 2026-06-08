@@ -26,12 +26,31 @@
 ### 技能调用原则
 
 ```
-1. 每个 Phase 开始前 → [RESEARCH] 查阅 HarmonyOS_Development_Guide.md
-2. 每次生成代码后 → [REVIEW] 对照前后步骤自检代码质量
-3. 每次 hvigorw 构建后 → [DEBUG] 分析输出、自动修复、不把错误抛给用户
-4. 每个 Phase 结束前 → [VALIDATE] 对照该 Phase 的验收条件逐项确认
-5. 每个 Phase 结束后 → [GIT] 提交代码
-6. 涉及不可逆操作 → [DIALOG] 必须获得用户确认
+1. 每个 Phase 开始前 → [RESEARCH] 查阅 HarmonyOS_Development_Guide.md 对应章节
+2. 每次 WRITE 代码后 → 立即 hvigorw assembleHap → [DEBUG] 自动分析和修复编译错误
+3. 每个 Phase 结束前 → [VALIDATE] 对照该 Phase 验收条件逐项确认
+4. 每个 Phase 结束后 → [GIT] 提交代码
+5. 涉及不可逆操作 → [DIALOG] 必须获得用户确认
+6. hvigorw 失败 → 读日志 → 定位文件 → Edit 修复 → 重编译, 最多循环 5 次
+7. 无法自动修复 → [DIALOG] 报告具体错误文件和行号, 请求用户协助
+```
+
+### 全局编译验证模式 (每个 Phase 结束前执行)
+
+```bash
+# [SHELL] 标准编译验证块 — 每个 Phase 结束前复制此块
+source /tmp/sop_harmony.env 2>/dev/null
+cd ${PROJECT_DIR}
+echo "=== 编译验证 ==="
+hvigorw assembleHap 2>&1 | tail -20
+BUILD_EXIT=$?
+if [ $BUILD_EXIT -ne 0 ]; then
+  echo "❌ 编译失败! [DEBUG] 自动分析错误日志..."
+  # [DEBUG] Claude Code 读取 hvigorw 输出, 定位 .ets 文件和行号, 用 Edit 修复
+  hvigorw assembleHap 2>&1 | grep -E "ERROR|\.ets:[0-9]+"
+else
+  echo "✅ 编译通过"
+fi
 ```
 
 ---
@@ -462,7 +481,15 @@ struct Index {
 }
 ```
 
-> **Claude Code 执行**: 编译验证 → `hvigorw assembleHap 2>&1 | tail -5` → [DEBUG] 修复 → [GIT] commit
+```bash
+# [SHELL] Phase 2 编译验证
+source /tmp/sop_harmony.env 2>/dev/null
+cd ${PROJECT_DIR}
+hvigorw assembleHap 2>&1 | tail -20
+# [DEBUG] 如有错误: 读取错误行号 → Edit 目标 .ets 文件 → 修复 → 重编译
+# [GIT]
+git add -A && git commit -m "Phase 2: Stage architecture + DesignTokens + Index stub"
+```
 
 ---
 
@@ -648,7 +675,14 @@ onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
 }
 ```
 
-> **[SHELL]** 编译验证 → [DEBUG] → [GIT] commit
+```bash
+# [SHELL] Phase 3 编译验证 (验证 Model + DatabaseService + PreferenceService 集成)
+source /tmp/sop_harmony.env 2>/dev/null && cd ${PROJECT_DIR}
+hvigorw assembleHap 2>&1 | tail -20
+# [DEBUG] 常见错误: import 路径不对 / Context 类型未声明 / 缺少 @kit.ArkData 依赖
+# [GIT]
+git add -A && git commit -m "Phase 3: Data layer - Model + RelationalStore + Preferences"
+```
 
 ---
 
@@ -735,7 +769,14 @@ export class TaskViewModel {
 }
 ```
 
-> **[SHELL]** 编译验证 → [DEBUG] → [GIT] commit
+```bash
+# [SHELL] Phase 4 编译验证
+source /tmp/sop_harmony.env 2>/dev/null && cd ${PROJECT_DIR}
+hvigorw assembleHap 2>&1 | tail -20
+# [DEBUG] 常见错误: FilterOption 导入路径 / TaskItem 属性不存在
+# [GIT]
+git add -A && git commit -m "Phase 4: ViewModel - TaskViewModel with filter/search/CRUD"
+```
 
 ---
 
@@ -951,7 +992,18 @@ struct Index {
 ✅ 支持横竖屏 (module.json5: "orientation": "auto_rotation")
 ```
 
-> **[SHELL]** 编译验证 → [DEBUG] → 在 Previewer 中验证 → [GIT] commit
+```bash
+# [SHELL] Phase 5 编译验证
+source /tmp/sop_harmony.env 2>/dev/null && cd ${PROJECT_DIR}
+hvigorw assembleHap 2>&1 | tail -20
+# [DEBUG] 常见错误: TaskCard @Prop 类型不匹配 / @Entry 页面缺失
+# [DIALOG] 在 DevEco Studio Previewer 中打开 Index.ets → 视觉确认与原型一致
+# 用户回复 "视觉确认通过" 后继续
+```
+```bash
+# [GIT]
+git add -A && git commit -m "Phase 5: UI layer - TaskCard + Index + HIG compliance"
+```
 
 ---
 
@@ -985,159 +1037,560 @@ git add -A && git commit -m "Day 1 complete: MVP with Stage + MVVM + RelationalS
 
 # 🗓️ DAY 2 — 从 MVP 到可发布
 
-### Day 2 启动校验
+### Day 2 启动校验 (0:00-0:05)
 
 ```bash
-source /tmp/sop_harmony.env 2>/dev/null
-cd ${PROJECT_DIR}
-hvigorw assembleHap 2>&1 | tail -5
-# [DEBUG] 确保 Day 1 代码仍可编译
+# [SHELL] + [DEBUG] 验证 Day 1 代码完好
+source /tmp/sop_harmony.env 2>/dev/null && cd ${PROJECT_DIR}
+git status --short
+echo "=== Day 2 启动编译验证 ==="
+hvigorw assembleHap 2>&1 | tail -20
+# [DEBUG] 如有编译失败 → 修复再继续; 如通过 → 进入 Day 2
+echo "✅ Day 2 启动校验通过"
 ```
 
 ---
 
-## Phase 7-8: 集成测试 & 细节完善 (Day 2, 0:00-3:30)
+## Phase 7: 详情页 & 路由集成 (Day 2, 0:05-1:00)
 
-> **[GENERATE]** + **[DEBUG]** 添加详情页、设置页、搜索、手势交互
+> **[GENERATE]** + **[WRITE]** + **[DEBUG]** 创建编辑详情页, 集成 Navigation 路由
 
-### 关键文件
+### Step 7.1 — DetailPage (完整实现)
+
+**[WRITE]** `entry/src/main/ets/pages/DetailPage.ets`:
 
 ```typescript
-// entry/src/main/ets/pages/DetailPage.ets
+import { router } from '@kit.ArkUI'
+import { TaskItem, Priority } from '../model/TaskItem'
+import { TaskViewModel } from '../viewmodel/TaskViewModel'
+import { DesignTokens } from '../common/DesignTokens'
+
 @Entry
 @Component
 struct DetailPage {
   @State task: TaskItem = new TaskItem()
-  @State viewModel: TaskViewModel = new TaskViewModel()
+  @State editTitle: string = ''
+  @State editDescription: string = ''
+  @State editPriority: number = Priority.MEDIUM
+  @State editDueDate: string = ''
+  private viewModel: TaskViewModel = new TaskViewModel()
+  private isNewTask: boolean = true
 
   aboutToAppear(): void {
-    // 从 router 接收 taskId, 加载详情
+    const params = router.getParams() as Record<string, Object>
+    if (params && params['taskId']) {
+      // 编辑已有任务: 从 ViewModel 查找
+      this.viewModel.loadTasks().then(() => {
+        const found = this.viewModel.tasks.find(t => t.id === params['taskId'])
+        if (found) {
+          this.task = found
+          this.editTitle = found.title
+          this.editDescription = found.description
+          this.editPriority = found.priority
+          this.editDueDate = found.dueDate > 0 ? new Date(found.dueDate).toISOString().slice(0, 10) : ''
+          this.isNewTask = false
+        }
+      })
+    }
   }
 
   build() {
     Column() {
-      // 编辑表单
-      TextInput({ placeholder: '任务标题', text: this.task.title })
-        .onChange((value: string) => { this.task.title = value })
-      // ... 更多字段
-      Button('保存').onClick(() => {
-        this.viewModel.updateTask(this.task)
-        router.back()
-      })
+      // 标题栏
+      Row() {
+        Button('取消').fontSize(16).backgroundColor(Color.Transparent)
+          .onClick(() => { router.back() })
+        Text(this.isNewTask ? '新建任务' : '编辑任务')
+          .fontSize(18).fontWeight(FontWeight.Bold).layoutWeight(1).textAlign(TextAlign.Center)
+        Button('保存').fontSize(16).fontColor(DesignTokens.COLOR_PRIMARY)
+          .backgroundColor(Color.Transparent)
+          .onClick(() => { this.saveTask() })
+      }
+      .width('100%').padding(16)
+
+      // 表单
+      Column({ space: DesignTokens.SPACING_LG }) {
+        TextInput({ placeholder: '任务标题', text: this.editTitle })
+          .fontSize(16).width('100%')
+          .onChange((v: string) => { this.editTitle = v })
+
+        TextArea({ placeholder: '详细描述 (可选)', text: this.editDescription })
+          .fontSize(14).width('100%').height(100)
+          .onChange((v: string) => { this.editDescription = v })
+
+        Row({ space: DesignTokens.SPACING_MD }) {
+          Text('优先级').fontSize(16)
+          Blank()
+          ForEach(['低', '中', '高', '紧急'], (label: string, index: number) => {
+            Text(label)
+              .fontSize(14).fontColor(this.editPriority === index ? Color.White : DesignTokens.COLOR_TEXT_PRIMARY)
+              .padding({ left: 12, right: 12, top: 4, bottom: 4 })
+              .backgroundColor(this.editPriority === index ? DesignTokens.COLOR_PRIMARY : DesignTokens.COLOR_BG)
+              .borderRadius(DesignTokens.RADIUS_SM)
+              .onClick(() => { this.editPriority = index })
+          })
+        }.width('100%')
+
+        TextInput({ placeholder: '截止日期 (YYYY-MM-DD)', text: this.editDueDate })
+          .fontSize(16).width('100%')
+          .onChange((v: string) => { this.editDueDate = v })
+      }
+      .padding(16).layoutWeight(1)
     }
+    .width('100%').height('100%')
+    .backgroundColor(DesignTokens.COLOR_BG)
+  }
+
+  saveTask(): void {
+    if (!this.editTitle.trim()) return  // 标题必填
+    this.task.title = this.editTitle
+    this.task.description = this.editDescription
+    this.task.priority = this.editPriority
+    if (this.editDueDate) {
+      this.task.dueDate = new Date(this.editDueDate).getTime()
+    }
+    if (this.isNewTask) {
+      this.viewModel.addTask(this.task.title, this.task.priority)
+    } else {
+      this.viewModel.updateTask(this.task)
+    }
+    router.back()
   }
 }
+```
 
-// entry/src/main/ets/pages/SettingsPage.ets
+### Step 7.2 — 注册路由 & 首页跳转
+
+**[READ]** 打开 `entry/src/main/resources/base/profile/main_pages.json` → **[EDIT]** 添加 DetailPage:
+
+```json
+{
+  "src": [
+    "pages/Index",
+    "pages/DetailPage",
+    "pages/SettingsPage"
+  ]
+}
+```
+
+**[EDIT]** 更新 Index.ets: 任务卡片点击跳转到编辑页:
+
+```typescript
+// 在 TaskCard 的 onTap 回调中:
+onTap: () => {
+  router.pushUrl({ url: 'pages/DetailPage', params: { taskId: task.id } })
+}
+
+// 添加按钮改为跳转新建页:
+Button('添加任务').onClick(() => {
+  router.pushUrl({ url: 'pages/DetailPage' })
+})
+```
+
+```bash
+# [SHELL] Phase 7 编译验证
+source /tmp/sop_harmony.env 2>/dev/null && cd ${PROJECT_DIR}
+hvigorw assembleHap 2>&1 | tail -20
+# [GIT]
+git add -A && git commit -m "Phase 7: DetailPage + router integration"
+```
+
+---
+
+## Phase 8: 设置页 & 搜索 & 手势 (Day 2, 1:00-2:00)
+
+> **[GENERATE]** + **[WRITE]** 设置页 + 搜索功能 + ContextMenu
+
+**[WRITE]** `entry/src/main/ets/pages/SettingsPage.ets`:
+
+```typescript
+import { DesignTokens } from '../common/DesignTokens'
+import { PreferenceService } from '../service/PreferenceService'
+import { router } from '@kit.ArkUI'
+
 @Entry
 @Component
 struct SettingsPage {
   @State hapticEnabled: boolean = true
+  @State darkModeEnabled: boolean = false
+
+  aboutToAppear(): void {
+    PreferenceService.getBoolean('haptic_enabled', true).then(v => { this.hapticEnabled = v })
+  }
 
   build() {
     Column() {
-      Text('设置').fontSize(28).fontWeight(FontWeight.Bold)
       Row() {
-        Text('触觉反馈')
-        Toggle({ type: ToggleType.Switch, isOn: this.hapticEnabled })
-          .onChange((value: boolean) => { this.hapticEnabled = value })
-      }
-    }
+        Button('← 返回').fontSize(16).backgroundColor(Color.Transparent)
+          .onClick(() => { router.back() })
+        Text('设置').fontSize(20).fontWeight(FontWeight.Bold).layoutWeight(1).textAlign(TextAlign.Center)
+        Blank().width(60)
+      }.width('100%').padding(16)
+
+      List() {
+        ListItem() {
+          Row() {
+            Text('触觉反馈').fontSize(16)
+            Blank()
+            Toggle({ type: ToggleType.Switch, isOn: this.hapticEnabled })
+              .onChange((v: boolean) => {
+                this.hapticEnabled = v
+                PreferenceService.setBoolean('haptic_enabled', v)
+              })
+          }.width('100%').padding(16).backgroundColor(Color.White).borderRadius(12)
+        }.margin({ bottom: 8 })
+
+        ListItem() {
+          Row() {
+            Text('关于').fontSize(16).layoutWeight(1)
+            Text('v1.0.0').fontSize(14).fontColor(DesignTokens.COLOR_TEXT_SECONDARY)
+            Image($r('sys.media.ohos_ic_public_arrow_right')).width(16).height(16)
+              .fillColor(DesignTokens.COLOR_TEXT_TERTIARY)
+          }.width('100%').padding(16).backgroundColor(Color.White).borderRadius(12)
+        }
+      }.layoutWeight(1).padding(16)
+    }.width('100%').height('100%').backgroundColor(DesignTokens.COLOR_BG)
   }
 }
 ```
 
-> **[WRITE]** 注册新页面到 `main_pages.json` → 编译验证 → [GIT]
+**[EDIT]** 更新 Index.ets — 添加搜索栏和长按删除:
+
+```typescript
+// 在 build() 中筛选标签前添加:
+Search({ placeholder: '搜索任务', value: this.viewModel.searchText })
+  .onChange((value: string) => {
+    this.viewModel.searchText = value
+    this.refreshFlag++
+  })
+  .width('90%')
+  .margin({ top: 8, bottom: 8 })
+
+// 在 TaskCard 上添加 ContextMenu (长按删除):
+.onGesture(
+  LongPressGesture().onAction(() => {
+    this.viewModel.deleteTask(task.id).then(() => { this.refreshFlag++ })
+  })
+)
+```
+
+```bash
+# [SHELL] Phase 8 编译验证
+source /tmp/sop_harmony.env 2>/dev/null && cd ${PROJECT_DIR}
+hvigorw assembleHap 2>&1 | tail -20
+# [GIT]
+git add -A && git commit -m "Phase 8: Settings + search + gesture"
+```
 
 ---
 
-## Phase 9: AppGallery 素材准备 (Day 2, 3:30-4:30)
+## Phase 9: AppGallery 素材 & 元数据 (Day 2, 2:00-3:30)
 
 > **[SHELL]** + **[WRITE]** + **[DIALOG]**
 
+### Step 9.1 — AGC App 创建
+
 ```
-═══════════════════════════════════════
-📱 AppGallery Connect 素材清单
-═══════════════════════════════════════
+[DIALOG] 指导用户创建 AGC 应用:
 
-□ 应用图标: 512×512 px PNG
-□ 应用截图: ≥ 3 张 (分辨率 ≥ 1080p)
-□ 应用描述: 50-8000 字符
-□ 隐私政策 URL
-□ 应用分类 & 年龄分级
-
-Claude Code 指导:
-1. 图标: 准备 512×512 PNG 放在 AppScope/resources/base/media/
-2. 截图: 使用 DevEco Previewer 截图或真机截屏
-3. 描述: 根据 SPECS.md 生成 (参照 iOS SOP Phase 9.4)
+1. 打开 https://developer.huawei.com → AppGallery Connect
+2. 我的项目 → 添加项目 → 填写项目名称
+3. 项目内 → 添加应用 → 选择平台 (HarmonyOS)
+4. 填写应用包名: ${BUNDLE_NAME}
+5. 创建完成后回复 'AGC 应用已创建'
 ```
 
----
-
-## Phase 10: 构建签名 & 云测试 (Day 2, 4:30-5:30)
+### Step 9.2 — 图标 & 截图
 
 ```bash
-# 构建发布包
-hvigorw assembleApp
+# [SHELL] 准备图标 (需要用户提供 1024×1024 源图)
+# 鸿蒙图标规范: 512×512 px, PNG, 无透明背景
+# 放置位置: AppScope/resources/base/media/app_icon.png
 
-# 产物
-# build/outputs/default/app-default-unsigned.app    # 未签名 APP
-# build/outputs/default/entry-default-unsigned.hap  # 未签名 HAP
+# [SHELL] 截图 — 使用 hdc 从真机截取, 或用 Previewer 截图
+# 截图尺寸要求: ≥ 1080×1920 (竖屏)
+# 至少 3 张: 首页、功能页、设置页
+```
 
-# [DIALOG] 签名需要在 AGC 中配置:
-echo "
-请在 AppGallery Connect 中配置签名:
-1. https://developer.huawei.com → 我的项目 → 签名
-2. 生成/上传发布证书 (.p12)
-3. 配置签名后重新构建
-"
+### Step 9.3 — 元数据生成
+
+> **[WRITE]** 根据 SPECS.md 生成:
+
+```markdown
+# AGC 元数据
+
+## 应用名称
+${DISPLAY_NAME} (2-30字符)
+
+## 应用描述 (50-8000字符)
+[从 SPECS.md 核心功能生成]
+
+## 隐私政策 URL
+[用户提供]
+
+## 应用分类
+工具 / 效率 / (根据实际选择)
+
+## 年龄分级
+4+ / 12+ / 16+ / 18+
+```
+
+```bash
+# [GIT]
+git add -A && git commit -m "Phase 9: AppGallery assets & metadata"
 ```
 
 ---
 
-## Phase 11-13: AGC 提交审核 & 归档 (Day 2, 5:30-8:00)
+## Phase 10: 签名配置 & 发布构建 (Day 2, 3:30-4:30)
 
-> **[DIALOG]** + **[VALIDATE]** + **[GIT]**
+> **[SHELL]** + **[DIALOG]**
+
+### Step 10.1 — 签名证书获取
 
 ```
-═══════════════════════════════════════
-AGC 提交检查清单
-═══════════════════════════════════════
+[DIALOG] 指导用户获取签名证书:
 
-□ 1. 应用信息完整 (名称/描述/图标/截图)
-□ 2. 隐私政策 URL 可访问
-□ 3. 云测试通过 (兼容性/稳定性/性能/安全/权限)
-□ 4. 应用包签名正确
-□ 5. 版本号正确 (versionCode + versionName)
-□ 6. 内容合规 (无违规内容、无侵权)
+1. 打开 DevEco Studio → Build → Generate Key and CSR
+2. 填写: Alias=release, 密码, 组织信息
+3. 生成 .p12 密钥库 + .csr 证书请求文件
+4. 登录 AGC → 我的项目 → 签名 → 上传 .csr → 下载 .p7b 证书链
+5. 文件清单:
+   - release.p12 (密钥库, 自己保管)
+   - release.p7b (证书链, AGC 签发)
+   - release.cer (证书, 可选)
+```
 
+### Step 10.2 — 配置 build-profile.json5
+
+```json5
+// [EDIT] entry/build-profile.json5 — 添加签名配置
+{
+  "apiType": "stageMode",
+  "buildOption": {},
+  "targets": [{
+    "name": "default",
+    "runtimeOS": "HarmonyOS"
+  }],
+  "signingConfigs": [{
+    "name": "release",
+    "type": "HarmonyOS",
+    "material": {
+      "storeFile": "release.p12",
+      "storePassword": "YOUR_PASSWORD",
+      "keyAlias": "release",
+      "keyPassword": "YOUR_KEY_PASSWORD",
+      "signAlg": "SHA256withECDSA",
+      "profile": "release.p7b",
+      "certpath": "release.cer"
+    }
+  }]
+}
+```
+
+### Step 10.3 — 发布构建
+
+```bash
+source /tmp/sop_harmony.env 2>/dev/null && cd ${PROJECT_DIR}
+# 清理后构建发布包
+hvigorw clean
+hvigorw assembleApp 2>&1 | tail -20
+
+# 产物路径
+echo "=== 构建产物 ==="
+find build -name "*.app" -o -name "*.hap" 2>/dev/null
+# [DEBUG] 确认 .app 文件存在且 > 1MB
+```
+
+```bash
 # [GIT]
 git tag v1.0.0
-git commit -m "Release v1.0.0 for AppGallery submission"
+git add -A && git commit -m "Phase 10: Release build v1.0.0 signed"
 ```
 
 ---
 
-## 📚 附录: 关键命令速查
+## Phase 11: AGC 云测试 (Day 2, 4:30-5:30)
+
+> **[DIALOG]** 云测试必须通过才能上架
+
+```
+[DIALOG] AGC 云测试流程:
+
+1. 打开 AGC → 我的应用 → 版本 → 上传 .app 包
+2. 上传后 → 云测试 → 新建测试
+3. 选择测试类型:
+   □ 兼容性测试 (≥ 5 款设备)
+   □ 稳定性测试 (Monkey ≥ 30min)
+   □ 性能测试 (冷启动 < 2s)
+   □ 安全测试
+   □ 权限测试
+4. 等待测试完成 (约 30 分钟)
+5. 全部通过后 → 进入 Phase 12
+
+如有失败:
+- [DEBUG] 查看测试报告 → 定位问题 → 修复代码 → 重新构建 → 重新测试
+```
+
+---
+
+## Phase 12: AGC 提交审核 (Day 2, 5:30-6:30)
+
+> **[DIALOG]** + **[VALIDATE]**
+
+```
+[VALIDATE] Claude Code 逐项确认 AGC 提交清单:
+
+□ 1. 应用名称/描述/图标/截图 已上传
+□ 2. 隐私政策 URL 可访问 (curl -sL <URL> 验证)
+□ 3. 云测试全部通过
+□ 4. 应用包已上传且签名正确
+□ 5. 版本号正确 (versionCode: 1000000, versionName: "1.0.0")
+□ 6. 应用分类 & 年龄分级 已选择
+□ 7. 权限声明 完整 (AGC 会自动检测)
+□ 8. 无违规内容声明
+
+[DIALOG] 指导用户点击 "提交审核":
+1. AGC → 我的应用 → 版本 → 点击 "提交审核"
+2. 填写审核备注 (可选)
+3. 确认提交
+
+审核周期: 通常 3-7 个工作日
+```
+
+---
+
+## Phase 13: 归档 & 后续维护 (Day 2, 6:30-8:00)
+
+> **[GIT]** + **[GENERATE]** 文档归档
+
+```bash
+# [SHELL] 最终提交
+source /tmp/sop_harmony.env 2>/dev/null && cd ${PROJECT_DIR}
+
+# 归档产出
+mkdir -p docs
+cp SPECS.md DESIGN_SPECS.md docs/ 2>/dev/null
+cp DAY1_REPORT.md docs/ 2>/dev/null
+
+# 生成 README
+cat > README.md << READMEEOF
+# ${PROJECT_NAME}
+
+## 技术栈
+- ArkTS + ArkUI + Stage 模型
+- RelationalStore 本地存储
+- HarmonyOS NEXT API 12+
+
+## 项目结构
+\`\`\`
+entry/src/main/ets/
+├── entryability/EntryAbility.ets
+├── pages/ (Index, DetailPage, SettingsPage)
+├── components/TaskCard.ets
+├── model/TaskItem.ets
+├── viewmodel/TaskViewModel.ets
+├── service/ (DatabaseService, PreferenceService)
+└── common/ (DesignTokens, Utils)
+\`\`\`
+
+## 构建
+\`\`\`bash
+hvigorw assembleHap    # 调试
+hvigorw assembleApp    # 发布
+\`\`\`
+READMEEOF
+
+# [GIT] 最终提交 & tag
+git add -A
+git commit -m "Release v1.0.0 - AppGallery submission ready"
+git tag -a "v1.0.0" -m "Release v1.0.0"
+
+echo "🎉 鸿蒙 App 开发完成!"
+echo "   下一步: AGC 审核通过后 → 上架 → 进入软著申请流程"
+```
+
+---
+
+## 📚 附录
+
+### A. 关键命令速查
 
 ```bash
 # 构建
-hvigorw assembleHap           # 调试 HAP
-hvigorw assembleApp           # 发布 APP
-hvigorw clean                 # 清理
+hvigorw assembleHap                         # 调试 HAP
+hvigorw assembleApp                         # 发布 APP (含签名)
+hvigorw clean                               # 清理构建产物
 
 # 真机调试
-hdc shell                      # 连接设备
-hdc app install xxx.hap        # 安装应用
-hdc uninstall com.example.xxx  # 卸载
-hdc hilog                      # 查看日志
+hdc shell                                   # 连接设备 shell
+hdc app install build/.../xxx.hap            # 安装应用
+hdc app uninstall ${BUNDLE_NAME}             # 卸载
+hdc hilog                                   # 实时日志
+hdc hilog | grep "MyApp"                    # 过滤日志
+hdc file recv /data/app/.../xxx.hap ./       # 从设备拉取文件
 
-# Git
-git add -A && git commit -m "msg"
-git tag v1.0.0
-
-# 项目结构创建
+# 创建目录
 mkdir -p entry/src/main/ets/{model,viewmodel,service,components,common,pages}
+mkdir -p prototype/{screens,components}
+```
+
+### B. 常见 hvigorw 编译错误速查
+
+| 错误 | 原因 | 修复 |
+|------|------|------|
+| `Cannot find module '@kit.xxx'` | Kit 导入路径错误或 API 版本不匹配 | 检查 oh-package.json5 依赖; API 11 使用 `@ohos.xxx` |
+| `ArkTS:ERROR: Use explicit types` | 变量未声明类型 | 添加类型注解: `let x: string = ''` |
+| `ForEach missing third parameter` | 缺少 keyGenerator | 添加 `(item) => item.id` |
+| `Property 'xxx' does not exist` | 引用了不存在的属性 | 检查 Model 类定义 |
+| `Object literal must include all properties` | 创建对象时缺少必需属性 | 补全对象属性或使用可选 `?` |
+| `Struct 'xxx' has no 'build' method` | @Component 缺少 build() | 添加 `build() {}` |
+| `Cannot find name 'Context'` | 缺少类型导入 | `import { Context } from '@kit.AbilityKit'` 或在 Ability 中使用 `this.context` |
+
+### C. Phase 文件依赖关系
+
+```
+Phase 0   创建项目骨架
+Phase 1   SPECS.md
+Phase 1.5 DESIGN_SPECS.md + 原型文件
+Phase 2   ┌─ common/DesignTokens.ets
+         ├─ common/Utils.ets
+         ├─ entryability/EntryAbility.ets (更新)
+         └─ pages/Index.ets (Stub)
+Phase 3   ┌─ model/TaskItem.ets
+         ├─ service/DatabaseService.ets  ← 依赖 TaskItem
+         ├─ service/PreferenceService.ets
+         └─ entryability/EntryAbility.ets (添加 DB init)
+Phase 4   └─ viewmodel/TaskViewModel.ets  ← 依赖 TaskItem + DatabaseService
+Phase 5   ┌─ components/TaskCard.ets       ← 依赖 TaskItem + DesignTokens
+         └─ pages/Index.ets (完整实现)      ← 依赖 TaskViewModel + TaskCard
+Phase 6   Day 1 收尾验证
+Phase 7   ┌─ pages/DetailPage.ets           ← 依赖 TaskItem + TaskViewModel
+         └─ main_pages.json (更新路由)
+Phase 8   ┌─ pages/SettingsPage.ets         ← 依赖 PreferenceService
+         └─ pages/Index.ets (添加搜索+手势)
+Phase 9   AppGallery 素材
+Phase 10  签名 + 发布构建
+Phase 11  AGC 云测试
+Phase 12  AGC 提交审核
+Phase 13  归档
+```
+
+### D. Claude Code 执行检查点
+
+```
+每次 hvigorw assembleHap 后必须:
+□ 读取输出 → 判断成功/失败
+□ 失败 → 提取错误文件+行号 → Edit 修复 → 重编译 (最多 5 次)
+□ 成功 → 继续下一个 Step
+
+每个 Phase 结束前必须:
+□ hvigorw assembleHap 通过 ✅
+□ git add -A + git commit ✅
+□ 用户确认 (如有 [DIALOG] 标记)
+
+Phase 5 额外的视觉验证:
+□ Previewer 打开 Index.ets → 截图 → 用户对比原型
 ```
 
 ---
