@@ -1,6 +1,27 @@
 # Changelog
 
-All notable changes to the SOP Hub will be documented in this file.
+---
+
+## [1.1.0] — 2026-06-08
+
+### Added
+- **鸿蒙 SOP**: NetworkService、DI Container、无障碍验证、华为 IAP、24项AGC清单、原型映射、华为账号登录、元数据自动生成、FAQ(8问)、自测(10项)
+- **Pipeline**: 鸿蒙→软著流水线覆盖
+- **CONTRIBUTING.md** + **CHANGELOG.md**
+- **Git tag v1.0.0**
+
+### Changed
+- 鸿蒙 SOP: 1,147 → **2,127** 行
+- Pipeline: 709 → **748** 行
+- 项目总行数: **12,177**
+- 项目文件按平台分目录 (ios/harmonyos/copyright/pipeline)
+- `hvigorw` → `./hvigorw` (29处)
+- EntryAbility Step 3.4: 片段 → 完整文件
+
+### Fixed
+- Pipeline 交叉引用路径 (8处 iOS + 4处 软著)
+- Step 7.2 模糊编辑指令 → 精确替换
+- LongPressGesture 位置 (ListItem 而非 TaskCard)
 
 ---
 

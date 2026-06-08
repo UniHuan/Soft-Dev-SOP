@@ -70,5 +70,5 @@ When updating any SOP:
 - Every Phase header must have a `> [SKILL]` annotation line
 - Every build call must use the correct tool path (`xcodebuild`, `./hvigorw`)
 - Every Phase end must include: compile verification → `[DEBUG]` → `[GIT]`
-- Reference docs (`HIG_KNOWLEDGE_BASE.md`, `HarmonyOS_Development_Guide.md`) must stay in sync
+- Reference docs (`ios/HIG_KNOWLEDGE_BASE.md`, `harmonyos/HarmonyOS_Development_Guide.md`) must stay in sync
 - Update `README.md` line counts if adding/removing content
