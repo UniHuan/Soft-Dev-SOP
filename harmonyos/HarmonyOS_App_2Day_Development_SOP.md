@@ -61,13 +61,14 @@ fi
 Day 1 (8h)                              Day 2 (8h)
 ├─ [0.0h] 环境检查 & 项目初始化          ├─ [0.0h] Day 2 启动校验
 ├─ [0.5h] 产品需求确认                   ├─ [0.1h] 详情页 & 路由集成
-├─ [1.0h] 高保真原型设计 & 设计系统       ├─ [1.0h] 设置页 & 搜索 & 手势
-├─ [2.0h] Stage 架构搭建                ├─ [2.0h] 无障碍 & 设计规范验证
-├─ [2.5h] 数据层 (Model + Store)        ├─ [2.5h] AppGallery 素材准备
-│    └─ [NetworkService 可选]           ├─ [3.5h] 签名配置 + IAP(可选)
-├─ [4.5h] ViewModel + [DI 容器]         ├─ [4.5h] 发布构建 & 云测试
-├─ [6.0h] UI 层 (ArkUI) ← 按原型实现     ├─ [6.0h] AGC 提交审核 (24项清单)
-└─ [7.5h] 自测 & 代码 Review             └─ [8.0h] 归档 & 文档
+├─ [1.0h] PRD 产品需求文档                ├─ [1.0h] 设置页 & 搜索 & 手势
+├─ [1.5h] 高保真原型 (基于PRD)           ├─ [2.0h] 无障碍 & 设计规范验证
+├─ [2.5h] Stage 架构搭建                ├─ [2.5h] AppGallery 素材准备
+├─ [3.0h] 数据层 (Model + Store)        ├─ [3.5h] 签名配置 + IAP(可选)
+│    └─ [可选: NetworkService]           ├─ [4.5h] 发布构建 & 云测试
+├─ [5.0h] ViewModel + [DI 容器]         ├─ [6.0h] AGC 提交审核 (24项清单)
+├─ [6.5h] UI 层 (ArkUI) ← 按原型实现     └─ [8.0h] 归档 & 文档
+└─ [8.0h] 自测 & 代码 Review
 ```
 
 ---
@@ -300,9 +301,46 @@ git add -A && git commit -m "Initial HarmonyOS project structure"
 3. 设置页 (SettingsPage)
 ```
 
+> ⚠️ **用户必须回复 "确认" 或修改意见，否则停止执行。**
+
 ---
 
-## Phase 1.5: 高保真原型设计 (1:00 - 2:00)
+## Phase 1.2: PRD 产品需求文档 (1:00 - 1:30)
+
+> **[GENERATE]** + **[WRITE]** + **[DIALOG]** 基于 SPECS.md 生成完整 PRD，作为原型设计的唯一输入。PRD 不确认，不进原型。
+
+Claude Code 生成 `PRD.md`，包含以下章节 (完整模板见 iOS SOP Phase 1.2):
+
+```
+PRD 核心章节:
+1. 产品概述 (定位/用户画像)
+2. 功能规格 (MoSCoW 优先级/详细流程)
+3. 用户流程 (核心流程/页面跳转图)
+4. 数据模型 (实体/字段/数据流)
+5. 屏幕规格 ← 原型设计的直接输入
+6. 非功能性需求 (性能/兼容/无障碍/离线/隐私)
+7. 验收标准 (Acceptance Criteria)
+```
+
+**第 5 章屏幕规格必须逐屏定义**:
+
+| 屏幕 | 区域 | 组件 | 数据源 | 交互 | 状态覆盖 |
+|------|------|------|--------|------|---------|
+| 首页 | 搜索栏 | Search() | → vm.searchText | 输入即搜 | — |
+| | 筛选标签 | Scroll+FilterPill×4 | → vm.selectedFilter | 点击切换 | — |
+| | 任务列表 | List+LazyForEach | ← vm.filteredTasks | 点击→详情, 长按→删除 | 加载/空/数据/错误 |
+| 详情页 | 标题 | TextInput | ↔ task.title | 必填 | — |
+| | 优先级 | 4 Button | ↔ task.priority | 单选 | — |
+| 设置页 | 触觉反馈 | Toggle | ↔ AppStorage | 开关 | — |
+
+> ⚠️ **用户必须回复 "PRD 确认" 或修改意见，否则停止执行。PRD 确认后方可进入 Phase 1.5 原型设计。**
+
+---
+
+## Phase 1.5: 高保真原型设计 (1:30 - 2:30)
+
+> **输入**: PRD.md (Phase 1.2) → **输出**: DESIGN_SPECS.md + Prototype/ 文件
+> **原型必须 1:1 覆盖 PRD 第 5 章定义的每个屏幕和每个状态。**
 
 > **[GENERATE]** + **[WRITE]** + **[DIALOG]** DevEco Studio Previewer 作为原型工具
 
