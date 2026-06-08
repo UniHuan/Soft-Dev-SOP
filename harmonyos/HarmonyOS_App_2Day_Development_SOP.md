@@ -59,14 +59,15 @@ fi
 
 ```
 Day 1 (8h)                              Day 2 (8h)
-├─ [0.0h] 环境检查 & 项目初始化          ├─ [0.0h] 集成测试 & Bug 修复
-├─ [0.5h] 产品需求确认                   ├─ [2.0h] 性能优化 & 无障碍
-├─ [1.0h] 高保真原型设计 & 设计系统       ├─ [3.5h] AppGallery 素材准备
-├─ [2.0h] Stage 架构搭建                ├─ [4.5h] 内购/订阅配置
-├─ [2.5h] 数据层 (Model + Store)        ├─ [5.5h] 构建签名 & 云测试
-├─ [4.5h] 业务逻辑层 (ViewModel)         ├─ [6.5h] AGC 提交审核
-├─ [6.0h] UI 层 (ArkUI) ← 按原型实现     └─ [8.0h] 提交审核 & 文档归档
-└─ [7.5h] 自测 & 代码 Review
+├─ [0.0h] 环境检查 & 项目初始化          ├─ [0.0h] Day 2 启动校验
+├─ [0.5h] 产品需求确认                   ├─ [0.1h] 详情页 & 路由集成
+├─ [1.0h] 高保真原型设计 & 设计系统       ├─ [1.0h] 设置页 & 搜索 & 手势
+├─ [2.0h] Stage 架构搭建                ├─ [2.0h] 无障碍 & 设计规范验证
+├─ [2.5h] 数据层 (Model + Store)        ├─ [2.5h] AppGallery 素材准备
+│    └─ [NetworkService 可选]           ├─ [3.5h] 签名配置 + IAP(可选)
+├─ [4.5h] ViewModel + [DI 容器]         ├─ [4.5h] 发布构建 & 云测试
+├─ [6.0h] UI 层 (ArkUI) ← 按原型实现     ├─ [6.0h] AGC 提交审核 (24项清单)
+└─ [7.5h] 自测 & 代码 Review             └─ [8.0h] 归档 & 文档
 ```
 
 ---
@@ -714,6 +715,69 @@ git add -A && git commit -m "Phase 3: Data layer - Model + RelationalStore + Pre
 
 ---
 
+### Phase 3.5: 网络服务封装 (可选, 如 SPECS 需要后端)
+
+> **[WRITE]** + **[GENERATE]** HTTP 客户端 + 华为账号登录 (如适用)
+
+```typescript
+// entry/src/main/ets/service/NetworkService.ets
+import { http } from '@kit.NetworkKit'
+
+export class NetworkError extends Error {
+  code: number
+  constructor(code: number, message: string) {
+    super(message)
+    this.code = code
+  }
+}
+
+export class NetworkService {
+  private static readonly BASE_URL = 'https://api.example.com/v1'
+  private static readonly TIMEOUT = 30000
+
+  static async request<T>(endpoint: string, options: http.HttpRequestOptions = {}): Promise<T> {
+    const httpRequest = http.createHttp()
+    const defaultOptions: http.HttpRequestOptions = {
+      method: http.RequestMethod.GET,
+      header: { 'Content-Type': 'application/json' },
+      connectTimeout: this.TIMEOUT,
+      readTimeout: this.TIMEOUT,
+      ...options
+    }
+    try {
+      const response = await httpRequest.request(`${this.BASE_URL}/${endpoint}`, defaultOptions)
+      if (response.responseCode === 200) {
+        return JSON.parse(response.result as string) as T
+      }
+      throw new NetworkError(response.responseCode, `HTTP ${response.responseCode}`)
+    } finally {
+      httpRequest.destroy()
+    }
+  }
+
+  static async get<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint)
+  }
+
+  static async post<T>(endpoint: string, body: object): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: http.RequestMethod.POST,
+      extraData: JSON.stringify(body)
+    })
+  }
+}
+```
+
+```bash
+# [SHELL] 编译验证
+source /tmp/sop_harmony.env 2>/dev/null && cd ${PROJECT_DIR}
+./hvigorw assembleHap 2>&1 | tail -10
+# [GIT]
+git add -A && git commit -m "Phase 3.5: NetworkService (optional)"
+```
+
+---
+
 ## Phase 4: ViewModel 层 (4:30 - 6:00)
 
 > **[GENERATE]** + **[WRITE]** + **[REVIEW]** 基于 Model 创建 ViewModel
@@ -804,6 +868,37 @@ source /tmp/sop_harmony.env 2>/dev/null && cd ${PROJECT_DIR}
 # [DEBUG] 常见错误: FilterOption 导入路径 / TaskItem 属性不存在
 # [GIT]
 git add -A && git commit -m "Phase 4: ViewModel - TaskViewModel with filter/search/CRUD"
+```
+
+### Phase 4.1: 依赖注入容器 (可选, ViewModel ≥ 3 时推荐)
+
+> **[WRITE]** 轻量 DI 容器，便于测试时注入 Mock
+
+```typescript
+// entry/src/main/ets/common/AppContainer.ets
+import { DatabaseService } from '../service/DatabaseService'
+import { PreferenceService } from '../service/PreferenceService'
+import { TaskViewModel } from '../viewmodel/TaskViewModel'
+
+export class AppContainer {
+  // ViewModel 工厂
+  static makeTaskViewModel(): TaskViewModel {
+    return new TaskViewModel()
+  }
+
+  // Service 初始化 (在 EntryAbility.onCreate 中调用)
+  static async initServices(context: Context): Promise<void> {
+    await DatabaseService.init(context)
+    await PreferenceService.init(context)
+  }
+}
+```
+
+> Claude Code 更新 EntryAbility: 用 `AppContainer.initServices(this.context)` 替换直接调用。
+
+```bash
+# [GIT]
+git add -A && git commit -m "Phase 4.1: DI container"
 ```
 
 ---
@@ -1348,6 +1443,38 @@ source /tmp/sop_harmony.env 2>/dev/null && cd ${PROJECT_DIR}
 git add -A && git commit -m "Phase 8: Settings + search + gesture"
 ```
 
+### Phase 8.1: 无障碍 & 鸿蒙设计规范验证
+
+> **[VALIDATE]** + **[REVIEW]** 对照鸿蒙设计规范逐项检查
+
+```
+✅ 文本 & 字体
+  □ 所有字号使用 fp 单位 (自适应系统字体缩放)
+  □ 最小字号 ≥ 12fp (鸿蒙无障碍标准)
+  □ 字体加粗使用 FontWeight 枚举
+
+✅ 颜色 & 对比度
+  □ 文字与背景对比度 ≥ 4.5:1 (小文本) / 3:1 (大文本)
+  □ 不依赖颜色作为唯一的信息传达方式
+  □ 深色模式适配 (系统自动)
+
+✅ 触摸 & 交互
+  □ 所有可点击元素 ≥ 48vp × 48vp (鸿蒙标准)
+  □ 重要操作有确认机制 (如删除前弹窗)
+  □ 手势不冲突 (长按/滑动/点击)
+
+✅ 内容 & 状态
+  □ 有空状态提示 (列表为空时显示引导)
+  □ 有加载状态 (LoadingProgress)
+  □ 有错误状态提示
+  □ 文字支持多语言 (使用 $r() 引用资源)
+
+✅ 鸿蒙特性
+  □ module.json5 声明 "orientation": "auto_rotation"
+  □ 支持手机 + 平板 + 2in1
+  □ app.json5 声明 deviceTypes: ["phone", "tablet"]
+```
+
 ---
 
 ## Phase 9: AppGallery 素材 & 元数据 (Day 2, 2:00-3:30)
@@ -1454,7 +1581,76 @@ git add -A && git commit -m "Phase 9: AppGallery assets & metadata"
 }
 ```
 
-### Step 10.3 — 发布构建
+### Step 10.3 — 华为应用内支付 (IAP, 可选)
+
+> 仅当 SPECS.md 选择了盈利模式 (华为 IAP) 时执行
+
+```typescript
+// entry/src/main/ets/service/IAPService.ets
+import { iap } from '@kit.IAPKit'
+import { BusinessError } from '@kit.BasicServicesKit'
+
+export class IAPService {
+  private static readonly PRODUCT_IDS = [
+    'premium_monthly',
+    'premium_yearly',
+    'remove_ads'
+  ]
+
+  // 查询可购买商品
+  static async queryProducts(): Promise<iap.ProductInfo[]> {
+    try {
+      const result = await iap.queryProductInfo({ productIds: this.PRODUCT_IDS })
+      return result.productInfos
+    } catch (err) {
+      const error = err as BusinessError
+      console.error(`IAP query failed: ${error.code} ${error.message}`)
+      return []
+    }
+  }
+
+  // 购买商品
+  static async purchase(productId: string): Promise<boolean> {
+    try {
+      const result = await iap.purchaseProduct({ productId: productId })
+      // 验证购买结果
+      if (result.purchaseResultCode === 0) {
+        console.info(`Purchase success: ${productId}`)
+        return true
+      }
+      return false
+    } catch (err) {
+      console.error(`Purchase failed: ${JSON.stringify(err)}`)
+      return false
+    }
+  }
+
+  // 恢复购买
+  static async restorePurchases(): Promise<void> {
+    // 查询已购非消耗型商品
+    try {
+      const result = await iap.queryPurchasedProductInfo({
+        productType: iap.ProductType.NONCONSUMABLE
+      })
+      // 恢复用户权益
+    } catch (err) {
+      console.error(`Restore failed: ${JSON.stringify(err)}`)
+    }
+  }
+}
+```
+
+```json5
+// 在 module.json5 声明 IAP 权限
+"requestPermissions": [
+  { "name": "ohos.permission.INTERNET" },
+  { "name": "ohos.permission.IN_APP_PURCHASE" }
+]
+```
+
+> **[DIALOG]** IAP 商品需先在 AGC → 增长 → 应用内支付 中配置商品 ID
+
+### Step 10.4 — 发布构建
 
 ```bash
 source /tmp/sop_harmony.env 2>/dev/null && cd ${PROJECT_DIR}
@@ -1507,21 +1703,62 @@ git add -A && git commit -m "Phase 10: Release build v1.0.0 signed"
 ```
 [VALIDATE] Claude Code 逐项确认 AGC 提交清单:
 
-□ 1. 应用名称/描述/图标/截图 已上传
-□ 2. 隐私政策 URL 可访问 (curl -sL <URL> 验证)
-□ 3. 云测试全部通过
-□ 4. 应用包已上传且签名正确
-□ 5. 版本号正确 (versionCode: 1000000, versionName: "1.0.0")
-□ 6. 应用分类 & 年龄分级 已选择
-□ 7. 权限声明 完整 (AGC 会自动检测)
-□ 8. 无违规内容声明
+```
+[VALIDATE] Claude Code 逐项确认 — AGC 提交完整检查清单:
 
-[DIALOG] 指导用户点击 "提交审核":
-1. AGC → 我的应用 → 版本 → 点击 "提交审核"
-2. 填写审核备注 (可选)
-3. 确认提交
+═══════════════════════════════════════
+一、应用信息
+═══════════════════════════════════════
+□ 1.1 应用名称: 2-30 字符, 不含禁用词
+□ 1.2 应用描述: 50-8000 字符, 无夸大宣传
+□ 1.3 应用图标: 512×512 px PNG, 清晰可辨
+□ 1.4 应用截图: ≥ 3 张, ≥ 1080p, 真实界面
 
-审核周期: 通常 3-7 个工作日
+═══════════════════════════════════════
+二、构建 & 签名
+═══════════════════════════════════════
+□ 2.1 .app 包已上传到 AGC
+□ 2.2 签名证书正确 (p12 + p7b)
+□ 2.3 versionCode 递增, versionName 正确
+□ 2.4 minAPIVersion ≤ 目标设备 API 版本
+
+═══════════════════════════════════════
+三、云测试 (必须全部通过)
+═══════════════════════════════════════
+□ 3.1 兼容性: ≥ 5 款设备通过
+□ 3.2 稳定性: Monkey ≥ 30min 无崩溃
+□ 3.3 性能: 冷启动 < 2s, 内存 < 500MB
+□ 3.4 安全: 无明文密码, 无日志敏感信息
+□ 3.5 权限: 声明的权限与实际使用一致
+
+═══════════════════════════════════════
+四、隐私 & 合规
+═══════════════════════════════════════
+□ 4.1 隐私政策 URL 可访问
+□ 4.2 所有敏感权限声明 { reason }
+□ 4.3 不获取无关权限 (最小权限原则)
+□ 4.4 用户数据收集说明清晰
+□ 4.5 年龄分级正确
+
+═══════════════════════════════════════
+五、内容审核
+═══════════════════════════════════════
+□ 5.1 无违法违规内容
+□ 5.2 无侵犯第三方权益 (商标/著作权)
+□ 5.3 无隐藏功能或恶意行为
+□ 5.4 应用功能与描述一致 (不夸大)
+
+═══════════════════════════════════════
+六、上架后维护
+═══════════════════════════════════════
+□ 6.1 记录上架日期 (用于软著首次发表日期)
+□ 6.2 配置 AGC 崩溃监控
+□ 6.3 配置 AGC 分析服务 (DAU/留存/崩溃率)
+□ 6.4 准备软著申请材料 (参照 copyright/ SOP)
+
+[DIALOG] 全部确认后:
+1. AGC → 我的应用 → 版本 → "提交审核"
+2. 审核周期: 3-7 个工作日
 ```
 
 ---
