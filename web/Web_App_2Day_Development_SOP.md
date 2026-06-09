@@ -491,39 +491,177 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
 ---
 
-## Phase 6-7: 测试 & 性能 (Day 2, 2:00-5:30)
+## Phase 6-7: 测试 & 性能 & SEO (Day 2, 2:00-5:30)
 
-```bash
-# Vitest 单元测试
-pnpm vitest run
+### Vitest 单元测试
 
-# Playwright E2E 测试
-npx playwright test
+> **[WRITE]** `src/__tests__/task-actions.test.ts`:
 
-# Lighthouse 性能审计
-npx lighthouse http://localhost:3000 --view
+```typescript
+import { describe, it, expect, vi } from "vitest"
+import { createTask, getTasks } from "@/actions/task-actions"
+import { prisma } from "@/lib/db"
+
+vi.mock("@/lib/db", () => ({
+    prisma: { task: { create: vi.fn(), findMany: vi.fn() } }
+}))
+
+describe("createTask", () => {
+  it("should reject empty title", async () => {
+    const formData = new FormData()
+    formData.set("title", "")
+    await expect(createTask(formData)).rejects.toThrow("标题不能为空")
+  })
+})
+```
+
+### Playwright E2E
+
+```typescript
+// e2e/home.spec.ts
+import { test, expect } from "@playwright/test"
+
+test("add and complete task flow", async ({ page }) => {
+  await page.goto("http://localhost:3000")
+  await page.fill("input[name=title]", "Buy groceries")
+  await page.click("button[type=submit]")
+  await expect(page.locator("text=Buy groceries")).toBeVisible()
+  await page.click("input[type=checkbox]")
+  await expect(page.locator("text=Buy groceries")).toHaveClass(/line-through/)
+})
+```
+
+### 性能优化
+
+```tsx
+// 图片优化
+import Image from "next/image"  // 自动 WebP + 懒加载
+
+// 字体优化
+import { Inter } from "next/font/google"
+const inter = Inter({ subsets: ["latin"], display: "swap" })
+
+// 动态导入 (代码分割)
+const HeavyComponent = dynamic(() => import("@/components/heavy"), {
+  loading: () => <Skeleton />
+})
+
+// ISR (增量静态再生成)
+export const revalidate = 60  // 60 秒重新验证
+```
+
+### SEO 元数据
+
+```tsx
+// app/layout.tsx
+export const metadata: Metadata = {
+  title: { default: "我的App", template: "%s | 我的App" },
+  description: "高效管理日常任务",
+  openGraph: { title: "我的App", description: "高效管理日常任务", type: "website" }
+}
+
+// app/page.tsx — 动态 sitemap
+// app/sitemap.ts → 自动生成 sitemap.xml
+// app/robots.ts → 自动生成 robots.txt
 ```
 
 ---
 
-## Phase 8: 部署到 Vercel (Day 2, 5:30-7:00)
+## Phase 8: 部署 (Day 2, 5:30-7:30)
+
+### Vercel 部署 (推荐)
 
 ```bash
-# [SHELL] 一键部署
+# [SHELL] 推送代码
 git add -A && git commit -m "Ready for production"
 git push origin main
 
-# [DIALOG] 用户在 Vercel 中:
-# 1. vercel.com → Import Git Repository → 选择仓库
-# 2. 自动检测 Next.js → 自动配置构建设置
-# 3. 添加环境变量: DATABASE_URL
-# 4. Deploy → 上线
-# 5. 绑定自定义域名 (可选)
+# [DIALOG] 用户在 Vercel 操作:
+# 1. vercel.com → Import Git Repository
+# 2. 自动检测 Next.js → Framework Preset: Next.js
+# 3. 环境变量: DATABASE_URL (Vercel Postgres 自动注入)
+# 4. Deploy → 获得域名: xxx.vercel.app
 ```
 
+### Vercel Postgres (数据库)
+
 ```bash
-# [SHELL] 或 CLI 部署
-npx vercel --prod
+# [SHELL] Vercel CLI
+npx vercel link          # 链接项目
+npx vercel env pull      # 拉取环境变量
+npx vercel postgres create  # 创建 PostgreSQL
+# 自动注入: POSTGRES_URL, POSTGRES_PRISMA_URL
+
+# 生产迁移:
+npx prisma migrate deploy
+```
+
+### 自定义域名 & 监控
+
+```bash
+# [SHELL] 域名 + 分析
+# Vercel → Settings → Domains → 添加 yourdomain.com
+# Vercel → Analytics → Enable (免费层: 2500 events/月)
+# Vercel → Speed Insights → Enable (Core Web Vitals)
+```
+
+### CLI 一键部署
+
+```bash
+npx vercel --prod          # 生产部署
+npx vercel --prod --env DATABASE_URL=xxx  # 带环境变量
+```
+
+---
+
+## Phase 9: 前后端联调 & E2E 验证 (Day 2, 7:30-8:00)
+
+### 联调配置
+
+```bash
+# [SHELL] 启动后端 (终端1)
+cd ../my-api-server && pnpm dev
+
+# [SHELL] 启动前端 (终端2) 
+cd ../my-web-app && pnpm dev
+
+# .env.local 配置后端地址
+NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
+```
+
+### API 客户端对接
+
+```typescript
+// [WRITE] src/lib/api.ts — 对接 Backend SOP 的后端
+const API_URL = process.env.NEXT_PUBLIC_API_URL
+
+export async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+  const res = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}), ...options.headers }
+  })
+  const json = await res.json()
+  if (!json.success) throw new Error(json.error?.message || "Request failed")
+  return json.data
+}
+
+// 替换 Server Actions 为后端 API 调用:
+// createTask → fetchAPI("/tasks", { method: "POST", body: JSON.stringify(data) })
+```
+
+### E2E 验证清单
+
+```
+□ 首页加载 < 2s (Lighthouse Performance ≥ 90)
+□ 创建任务 → 列表刷新 → 数据持久化
+□ 筛选/搜索功能正常
+□ 完成任务 → 删除线显示
+□ 删除任务 → 列表更新
+□ 响应式 (手机/平板/桌面 均正常)
+□ SEO 元数据正确 (title/description/OG)
+□ sitemap.xml 可访问
+□ 后端 API 健康检查通过
 ```
 
 ---
@@ -563,6 +701,28 @@ npx eslint .             # 代码规范检查
 | `PrismaClientInitializationError` | 数据库未迁移 | `npx prisma migrate dev` |
 | `Hydration failed` | 服务端/客户端 HTML 不一致 | 检查 `use client` 边界 |
 | `revalidatePath not working` | 未在 Server Action | 确保文件顶部有 `"use server"` |
+| `CORS error` (前后端联调) | 后端未配置前端 origin | Backend SOP: cors({ origin: [...] }) |
+| `Build failed: window is not defined` | 服务端组件用了浏览器 API | 加 `"use client"` 或 `useEffect` |
+
+### D. 文件依赖关系
+
+```
+Phase 0   项目骨架
+Phase 1   SPECS.md
+Phase 1.2 PRD.md
+Phase 1.5 原型 (prototype/page.tsx)
+Phase 2   ┌─ prisma/schema.prisma
+         └─ src/lib/db.ts
+Phase 3   └─ src/actions/task-actions.ts  ← 依赖 db
+Phase 4   ┌─ src/components/task-card.tsx  ← 依赖 actions
+         ├─ src/components/add-task-form.tsx
+         ├─ src/components/filter-bar.tsx
+         └─ src/app/page.tsx              ← 依赖 components + actions
+Phase 5   └─ src/auth.ts                  ← 依赖 db
+Phase 6-7 测试 + 性能
+Phase 8   Vercel 部署
+Phase 9   前后端联调 (对接 Backend SOP)
+```
 
 ---
 

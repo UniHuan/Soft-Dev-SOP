@@ -238,3 +238,58 @@ echo "   下一步: 配置 Secrets → push → 验证 CI 通过"
 
 > **SOP 版本**: 1.0.0 | **最后更新**: 2026-06-08
 > **关联文档**: `../ios/iOS_App_2Day_Development_SOP.md` + `../harmonyos/HarmonyOS_App_2Day_Development_SOP.md`
+
+---
+
+## 📋 Web 前端 CI — Vercel
+
+```yaml
+name: Web CI
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm tsc --noEmit && pnpm lint && pnpm test
+      - run: pnpm build
+      - name: Deploy (main)
+        if: github.ref == 'refs/heads/main'
+        run: npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
+```
+
+## 📋 后端 CI — Docker
+
+```yaml
+name: Backend CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env: { POSTGRES_USER: test, POSTGRES_PASSWORD: test, POSTGRES_DB: test }
+        ports: ["5432:5432"]
+    steps:
+      - uses: actions/checkout@v4
+      - run: pnpm install && pnpm test
+      - run: docker build -t api .
+```
+
+## 📋 Android CI — Gradle
+
+```yaml
+name: Android CI
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { java-version: 17, distribution: temurin }
+      - run: ./gradlew assembleDebug lint test
+```
