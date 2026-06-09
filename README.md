@@ -2,7 +2,7 @@
 
 > Claude Code + IDE 从零到上架的完整自动化流水线
 
-→ **[🚀 30 秒快速开始](QUICK_START.md)** ← 不知道该用哪个 SOP？先看这里。
+→ **[🚀 30 秒快速开始](QUICK_START.md)** | **[📖 完整使用手册](USER_MANUAL.md)** ← 新用户必读
 
 ---
 
