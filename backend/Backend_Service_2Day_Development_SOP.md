@@ -627,7 +627,78 @@ docsRoute.get("/openapi.json", (c) => {
 
 ---
 
-## Phase 4: Docker 容器化 (Day 2, 5:00-6:00)
+## Phase 4: 安全 & 合规审计 (Day 2, 4:00-5:00)
+
+> **[VALIDATE]** 后端安全是系统最后一道防线，逐项检查不得跳过
+
+### 安全检查
+
+```bash
+# [SHELL] 依赖漏洞扫描
+pnpm audit --audit-level=high
+
+# [SHELL] 环境变量检查
+test -f .env.example && echo "✅ .env.example 存在" || echo "❌ 创建 .env.example!"
+git check-ignore .env && echo "✅ .env 已 gitignored" || echo "❌ 立即添加!"
+
+# [SHELL] Secret 扫描
+grep -rn "sk-\|password\|secret\|api_key" src/ --include="*.ts" | grep -v "process\.env\|example\|test" | head -5
+```
+
+### 安全清单
+
+```
+□ 密码: bcrypt (cost ≥ 10)
+
+□ JWT: 过期 ≤ 7天, 使用环境变量 JWT_SECRET (非硬编码)
+□ CORS: 仅允许已知前端域名 (非 allowOrigin: "*")
+□ Rate Limiting: 已配置限流 (100 req/min)
+□ Helmet: 已添加安全 headers (XSS/CSRF/点击劫持防护)
+□ SQL 注入: Prisma 参数化查询 (无需额外防护)
+□ 输入验证: Zod schema 覆盖所有端点
+□ HTTPS: 强制 (生产环境)
+```
+
+```typescript
+// ✅ Rate Limiting (Hono)
+import { rateLimiter } from "hono-rate-limiter"
+app.use(rateLimiter({ windowMs: 60_000, max: 100, message: "Too many requests" }))
+
+// ✅ Helmet-like headers
+app.use("*", async (c, next) => {
+  c.res.headers.set("X-Content-Type-Options", "nosniff")
+  c.res.headers.set("X-Frame-Options", "DENY")
+  await next()
+})
+```
+
+### 合规检查
+
+```
+□ 日志不记录密码/Token/PII (个人身份信息)
+□ 数据库备份策略: 每日自动备份
+□ 数据保留策略: 用户可请求删除所有数据
+□ 隐私政策: 声明数据收集/使用/存储方式
+□ 生产环境: NODE_ENV=production
+```
+
+### 代码质量
+
+```bash
+# [SHELL] TypeScript 严格检查
+pnpm tsc --noEmit
+
+# [SHELL] ESLint
+pnpm eslint src/ --ext .ts
+
+# [SHELL] 测试覆盖率
+pnpm vitest --coverage
+# 目标: ≥ 70% 行覆盖率
+```
+
+---
+
+## Phase 5: Docker 容器化 (Day 2, 5:00-6:00)
 
 > **[WRITE]** `Dockerfile`:
 

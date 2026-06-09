@@ -491,7 +491,63 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
 ---
 
-## Phase 6-7: 测试 & 性能 & SEO (Day 2, 2:00-5:30)
+## Phase 6: 安全 & 合规审计 (Day 2, 2:00-3:00)
+
+> **[VALIDATE]** Claude Code 逐项检查安全/合规，不通过不进入 Phase 7
+
+### 安全检查
+
+```bash
+# [SHELL] 依赖漏洞扫描
+pnpm audit --audit-level=high
+
+# [SHELL] 环境变量检查 (确保无 .env 提交)
+git check-ignore .env .env.local && echo "✅ .env 已 gitignored" || echo "❌ 立即添加!"
+
+# [SHELL] Secret 扫描 (检查代码中是否有硬编码密钥)
+grep -rn "sk-\|api_key\|secret\|password" src/ --include="*.ts" --include="*.tsx" | grep -v "//\|example\|test\|\.env" | head -5
+```
+
+```typescript
+// ✅ 安全实践:
+// 1. CSP (Content Security Policy) — 在 next.config.js 配置
+const securityHeaders = [
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  { key: 'X-Frame-Options', value: 'DENY' },
+  { key: 'X-XSS-Protection', value: '1; mode=block' },
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' }
+]
+
+// 2. Server Actions 输入验证
+// 3. 无 dangerouslySetInnerHTML (如需使用 → DOMPurify)
+```
+
+### 合规检查
+
+```
+□ 隐私政策页面可访问 (/privacy)
+□ Cookie 同意弹窗 (如使用分析/广告 cookies)
+□ 联系邮箱可访问
+□ GDPR 合规 (欧盟用户): 数据删除权、数据导出权
+□ 无障碍 (Accessibility): WCAG 2.1 AA 标准
+```
+
+### 代码质量
+
+```bash
+# [SHELL] ESLint
+pnpm lint 2>&1 | tail -5
+
+# [SHELL] TypeScript 严格检查
+pnpm tsc --noEmit 2>&1 | tail -5
+
+# [SHELL] Prettier 格式检查
+pnpm prettier --check "src/**/*.{ts,tsx}"
+```
+
+---
+
+## Phase 7: 测试 & 性能 & SEO (Day 2, 3:00-5:30)
 
 ### Vitest 单元测试
 

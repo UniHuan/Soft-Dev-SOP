@@ -476,7 +476,63 @@ class HomeScreenTest {
 
 ---
 
-## Phase 8: 性能优化 (Day 2, 1:00-2:00)
+## Phase 8: 安全 & 合规 & 质量审计 (Day 2, 1:00-2:00)
+
+> **[VALIDATE]** Claude Code 逐项检查安全/合规/代码质量，不通过不进入 Phase 9
+
+### 安全检查
+
+```
+□ 敏感数据使用 EncryptedSharedPreferences (非明文 SharedPreferences)
+□ 网络通信 HTTPS only (Android 9+ 默认, 确认无 cleartext)
+□ API Key 不在代码中硬编码 (使用 BuildConfig + .gitignore)
+□ ProGuard/R8 已开启混淆 (isMinifyEnabled = true)
+□ WebView 禁用 JavaScript (如不使用) / 启用安全浏览
+□ 深度链接验证 (App Links 已配置 assetlinks.json)
+□ Firebase Crashlytics 已集成 (生产崩溃监控)
+```
+
+```kotlin
+// ✅ EncryptedSharedPreferences
+val masterKey = MasterKey.Builder(context).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build()
+val prefs = EncryptedSharedPreferences.create(context, "secure_prefs", masterKey,
+    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM)
+
+// ✅ BuildConfig (非硬编码)
+// local.properties (gitignored): API_KEY=xxx
+// app/build.gradle.kts: buildConfigField("String", "API_KEY", "\"${properties["API_KEY"]}\"")
+```
+
+### 合规检查
+
+```
+□ Google Play Data Safety 标签已填写
+□ 隐私政策 URL 可访问 (HTTPS)
+□ 敏感权限有运行时解释 (shouldShowRequestPermissionRationale)
+□ 无违规内容 (赌博/色情/暴力)
+□ 遵守 Google Play 家庭政策 (如面向儿童)
+□ 应用内购买使用 Google Play Billing (非第三方支付)
+```
+
+### 代码质量
+
+```bash
+# [SHELL] Lint 检查
+./gradlew lint 2>&1 | tail -10
+# 确认: 无 Error 级别问题, Warning < 10
+
+# [SHELL] Detekt (Kotlin 静态分析)
+./gradlew detekt 2>&1 | tail -5
+
+# [SHELL] 测试覆盖率
+./gradlew jacocoTestReport
+# 目标: 行覆盖率 ≥ 70%
+```
+
+---
+
+## Phase 8b: 性能优化 (Day 2, 2:00-2:30)
 
 ```kotlin
 // [WRITE] app/src/main/AndroidManifest.xml — 添加 profileable
