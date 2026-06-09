@@ -49,6 +49,7 @@
 | [测试策略](process/Testing_Strategy_SOP.md) | 测试金字塔、覆盖率目标、Bug 报告模板 | 137 |
 | [发布管理](process/Release_Management_SOP.md) | 语义化版本、发布检查清单、热修复流程 | 108 |
 | [需求挖掘 & 深度调研](process/Requirement_Discovery_Research_SOP.md) | 用户访谈→市场趋势→竞品分析→3套方案→价值分析 | 350 |
+| [产品变现 & 持续增长](process/Product_Monetization_SOP.md) | 定价策略→转化漏斗→留存防流失→扩展收入→数据看板 | 239 |
 | [ASO & 用户增长](process/ASO_Growth_SOP.md) | 关键词优化、视觉优化、评分管理、增长渠道 | 131 |
 
 ### 软著 & 全流程
@@ -94,7 +95,7 @@ Claude Code 会读取对应的 SOP 文件，按 Phase 顺序全自动执行。
 
 | 指标 | 数值 |
 |------|------|
-| SOP 文档数 | 15 |
+| SOP 文档数 | 16 |
 | 总行数 | 17,900+ |
 | Phase/Step 总数 | 100+ Phase，250+ Step |
 | 技能标注密度 | 每个 Step 1-3 个技能标签 |
