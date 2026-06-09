@@ -41,6 +41,15 @@
 |------|------|------|
 | [CI/CD 集成 SOP](cicd/CI_CD_Integration_SOP.md) | GitHub Actions + hvigor CI 双平台自动化 | 240 |
 
+### 开发流程 & 质量
+
+| 文档 | 说明 | 行数 |
+|------|------|------|
+| [Git 工作流 & 代码审查](process/Git_Workflow_Code_Review_SOP.md) | 分支策略、Conventional Commits、PR 审查清单 | 182 |
+| [测试策略](process/Testing_Strategy_SOP.md) | 测试金字塔、覆盖率目标、Bug 报告模板 | 137 |
+| [发布管理](process/Release_Management_SOP.md) | 语义化版本、发布检查清单、热修复流程 | 108 |
+| [ASO & 用户增长](process/ASO_Growth_SOP.md) | 关键词优化、视觉优化、评分管理、增长渠道 | 131 |
+
 ### 软著 & 全流程
 
 | 文档 | 说明 | 行数 |
@@ -84,12 +93,12 @@ Claude Code 会读取对应的 SOP 文件，按 Phase 顺序全自动执行。
 
 | 指标 | 数值 |
 |------|------|
-| SOP 文档数 | 9 |
+| SOP 文档数 | 13 |
 | 总行数 | 14,600+ |
 | Phase/Step 总数 | 80+ Phase，200+ Step |
 | 技能标注密度 | 每个 Step 1-3 个技能标签 |
 | 编译验证点 | 30+ 处 |
-| 覆盖平台 | iOS、Android、HarmonyOS、Web、软著、CI/CD |
+| 覆盖平台 | iOS、Android、HarmonyOS、Web、后端、软著、CI/CD、运营、流程 |
 
 ---
 
