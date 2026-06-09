@@ -5,6 +5,7 @@
 ```
 你想做什么?
 ├── 🍎 开发一个 iOS App → ios/iOS_App_2Day_Development_SOP.md
+├── 🔍 帮我挖掘软件需求 → process/Requirement_Discovery_Research_SOP.md
 ├── 🤖 开发一个 Android App → android/Android_App_2Day_Development_SOP.md
 ├── 🦋 开发一个鸿蒙 App → harmonyos/HarmonyOS_App_2Day_Development_SOP.md
 ├── 🌐 开发一个 Web 应用 → web/Web_App_2Day_Development_SOP.md
@@ -25,6 +26,7 @@
 "按照 SOP 搭建后端 API"          → Backend SOP
 "帮我申请软件著作权"              → Copyright SOP
 "帮我配置 CI/CD 自动化"          → CI/CD SOP
+"帮我挖掘未来半年软件需求"        → Requirement Discovery SOP
 "帮我配置 App 运营监控"          → Operations SOP
 ```
 
