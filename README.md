@@ -28,6 +28,12 @@
 |------|------|------|
 | [Android App 2 天开发 SOP](android/Android_App_2Day_Development_SOP.md) | Kotlin + Jetpack Compose，14 Phase 全自动执行 | 398 |
 
+### Web 开发
+
+| 文档 | 说明 | 行数 |
+|------|------|------|
+| [Web App 2 天开发 SOP](web/Web_App_2Day_Development_SOP.md) | Next.js 14+ + TypeScript + Prisma + Tailwind | 571 |
+
 ### CI/CD
 
 | 文档 | 说明 | 行数 |
@@ -77,12 +83,12 @@ Claude Code 会读取对应的 SOP 文件，按 Phase 顺序全自动执行。
 
 | 指标 | 数值 |
 |------|------|
-| SOP 文档数 | 8 |
-| 总行数 | 14,000+ |
+| SOP 文档数 | 9 |
+| 总行数 | 14,600+ |
 | Phase/Step 总数 | 80+ Phase，200+ Step |
 | 技能标注密度 | 每个 Step 1-3 个技能标签 |
 | 编译验证点 | 30+ 处 |
-| 覆盖平台 | iOS、Android、HarmonyOS、通用软著、CI/CD |
+| 覆盖平台 | iOS、Android、HarmonyOS、Web、软著、CI/CD |
 
 ---
 
