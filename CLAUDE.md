@@ -10,12 +10,27 @@ This repo contains SOP (Standard Operating Procedure) documentation for fully au
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `ios/iOS_App_2Day_Development_SOP.md` | 5,410 | iOS App 2-day dev SOP (SwiftUI+Xcode, 16 Phases) |
-| `ios/HIG_KNOWLEDGE_BASE.md` | 493 | Apple HIG knowledge base for `[RESEARCH]` |
-| `harmonyos/HarmonyOS_App_2Day_Development_SOP.md` | 1,702 | HarmonyOS App 2-day dev SOP (ArkTS+DevEco, 13 Phases) |
-| `harmonyos/HarmonyOS_Development_Guide.md` | 1,883 | HarmonyOS dev spec reference for `[RESEARCH]` |
-| `copyright/Software_Copyright_Application_SOP.md` | 1,269 | Software copyright application SOP (8 Phases) |
-| `pipeline/App_Development_to_Copyright_Full_Pipeline.md` | 709 | Combined iOS dev→App Store→copyright pipeline |
+| **Platform SOPs** | | |
+| `ios/iOS_App_2Day_Development_SOP.md` | 5,665 | iOS (SwiftUI+Xcode) — 17 Phases |
+| `harmonyos/HarmonyOS_App_2Day_Development_SOP.md` | 2,754 | HarmonyOS (ArkTS+DevEco) — 16 Phases |
+| `android/Android_App_2Day_Development_SOP.md` | 731 | Android (Kotlin+Compose) — 14 Phases |
+| `web/Web_App_2Day_Development_SOP.md` | 787 | Web (Next.js+Prisma) — 9 Phases |
+| `backend/Backend_Service_2Day_Development_SOP.md` | 878 | Backend (Hono+Prisma+JWT) — 6 Phases |
+| **Specialty SOPs** | | |
+| `copyright/Software_Copyright_Application_SOP.md` | 1,269 | Software copyright — 8 Phases |
+| `pipeline/App_Development_to_Copyright_Full_Pipeline.md` | 917 | Dev→App Store→Copyright pipeline |
+| `cicd/CI_CD_Integration_SOP.md` | 295 | CI/CD (GitHub Actions+hvigor) |
+| `operations/App_Operations_SOP.md` | 339 | Operations & monitoring |
+| **Process SOPs** | | |
+| `process/Git_Workflow_Code_Review_SOP.md` | 182 | Git flow + PR reviews |
+| `process/Testing_Strategy_SOP.md` | 137 | Test pyramid + coverage targets |
+| `process/Release_Management_SOP.md` | 108 | Semantic versioning + hotfix |
+| `process/ASO_Growth_SOP.md` | 131 | App Store Optimization |
+| `process/API_Design_SOP.md` | 107 | RESTful API standards |
+| `process/Security_Best_Practices_SOP.md` | 153 | OWASP + encryption + auth |
+| **Reference** | | |
+| `ios/HIG_KNOWLEDGE_BASE.md` | 493 | Apple HIG for `[RESEARCH]` |
+| `harmonyos/HarmonyOS_Development_Guide.md` | 1,883 | HarmonyOS dev specs for `[RESEARCH]` |
 
 ## Skill Annotation System
 
@@ -58,6 +73,33 @@ All SOPs use 9 skill tags. When Claude Code encounters a tag, switch to the corr
 - Phase 7.2: precise search-replace edits (marked "替换 1", "替换 2")
 - Phase 8: LongPressGesture on `ListItem()`, not on `TaskCard`
 - Phase 10: signing requires user to generate .p12/.csr via DevEco Studio GUI
+
+### Android SOP (`android/Android_App_2Day_Development_SOP.md`)
+- `source /tmp/sop_android.env` before every bash block
+- Build: `./gradlew assembleDebug` (NOT `./hvigorw`)
+- Phase 2: Hilt DI requires `@HiltAndroidApp` Application + `@Module @InstallIn`
+- Phase 8: Security checks — EncryptedSharedPreferences, R8 `isMinifyEnabled`, BuildConfig
+- Phase 11: `./gradlew bundleRelease` for Google Play (`.aab`), NOT APK
+- Phase 12: 26-item Google Play submission checklist
+
+### Web SOP (`web/Web_App_2Day_Development_SOP.md`)
+- Build: `pnpm build` + `pnpm tsc --noEmit` (dual check)
+- Phase 2: `npx prisma migrate dev` before any data operations
+- Phase 6: Security — `pnpm audit`, CSP headers, `.env` gitignored
+- Phase 8: Vercel auto-deploys on `git push main`
+- Phase 9: Backend integration via `fetchAPI()` with JWT token
+
+### Backend SOP (`backend/Backend_Service_2Day_Development_SOP.md`)
+- Build: `pnpm tsc` + `node dist/index.js`
+- Phase 2: JWT `signToken`/`verifyToken` with `JWT_SECRET` env var
+- Phase 4: Security — Rate Limiting, Helmet headers, `pnpm audit`, Secret scan
+- Phase 5: Docker `docker compose up -d` for local, Railway/Render for production
+- CORS: Must configure frontend origin (not `*`)
+
+### Quality Gates (all platforms)
+- Each SOP Phase 8 includes: code quality scan + security audit + quality gate
+- Gate: no build errors, lint clean, no hardcoded secrets, max file size checks
+- User must confirm "code audit passed" before progressing to Phase 9
 
 ### Copyright SOP (`copyright/Software_Copyright_Application_SOP.md`)
 - Phase 2: source code extraction uses `while IFS= read -r` (not `for f in $var`)

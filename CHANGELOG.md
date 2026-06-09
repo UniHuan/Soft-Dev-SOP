@@ -2,6 +2,55 @@
 
 ---
 
+## [2.4.0] — 2026-06-08
+
+### Added
+- **ArkTS 代码质量审计** (鸿蒙 SOP Phase 8.2): hvigor lint、大文件检查、硬编码扫描、6 维度清单
+- **Swift 代码质量审计** (iOS SOP Step 8.3): SwiftLint、强制解包检查、Keychain、性能规范
+- **五平台统一质量门禁**: build+lint+secret+filesize → Phase 9 准入
+
+### Changed
+- CLAUDE.md: 完整 Key Files 表 (17 文档) + Android/Web/Backend 平台规则
+- README: 行数/Phase/SOP 数更新至实际值
+
+---
+
+## [2.3.0] — 2026-06-08
+### Added
+- 安全/合规/质量检查嵌入 Android、Web、Backend SOP 的 Phase 8
+
+## [2.2.0] — 2026-06-08
+### Added
+- Security Best Practices SOP (153行)、API Design SOP (107行)
+
+## [2.1.0] — 2026-06-08
+### Added
+- Git Workflow、Testing Strategy、Release Management、ASO & Growth (4 份流程 SOP, 558行)
+
+## [2.0.0] — 2026-06-08
+### Added
+- Web SOP 扩展 (测试/SEO/E2E/Vercel Postgres/后端联调)、CI/CD 扩展 (Web/Backend/Android workflows)
+
+## [1.9.0] — 2026-06-08
+### Added
+- Android SOP 扩展 (398→675行): Hilt DI、DetailScreen、Play Billing、26项提交清单
+
+## [1.8.0] — 2026-06-08
+### Added
+- App Operations & Monitoring SOP (339行)
+
+## [1.7.0] — 2026-06-08
+### Added
+- Backend Service SOP (807行): Hono + Prisma + JWT + Docker
+
+## [1.6.0] — 2026-06-08
+### Added
+- Web App SOP (571行): Next.js 14+ + Prisma + shadcn/ui + Vercel
+
+## [1.5.0] — 2026-06-08
+### Added
+- CI/CD SOP (240行) + Android SOP (398行)
+
 ## [1.4.0] — 2026-06-08
 
 ### Added

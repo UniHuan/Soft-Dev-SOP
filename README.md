@@ -93,12 +93,12 @@ Claude Code 会读取对应的 SOP 文件，按 Phase 顺序全自动执行。
 
 | 指标 | 数值 |
 |------|------|
-| SOP 文档数 | 12 |
-| 总行数 | 14,600+ |
-| Phase/Step 总数 | 80+ Phase，200+ Step |
+| SOP 文档数 | 14 |
+| 总行数 | 17,500+ |
+| Phase/Step 总数 | 100+ Phase，250+ Step |
 | 技能标注密度 | 每个 Step 1-3 个技能标签 |
-| 编译验证点 | 30+ 处 |
-| 覆盖平台 | iOS、Android、HarmonyOS、Web、后端、软著、CI/CD、运营、流程 |
+| 编译验证点 | 50+ 处 |
+| 覆盖平台 | iOS、Android、HarmonyOS、Web、后端、软著、CI/CD、运营、流程、安全 |
 
 ---
 
