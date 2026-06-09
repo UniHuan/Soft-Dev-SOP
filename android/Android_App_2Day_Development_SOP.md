@@ -180,9 +180,60 @@ object AppColors {
     val Background = Color(0xFFF2F2F7)
     val Surface = Color(0xFFFFFFFF)
     val Error = Color(0xFFFF3B30)
+    val Success = Color(0xFF34C759)
+    val Warning = Color(0xFFFF9500)
 }
 
 // ui/theme/Type.kt — Material 3 Typography
+// ui/theme/Theme.kt — 统一主题
+@Composable
+fun AppTheme(content: @Composable () -> Unit) {
+    MaterialTheme(
+        colorScheme = lightColorScheme(
+            primary = AppColors.Primary,
+            error = AppColors.Error,
+            background = AppColors.Background,
+            surface = AppColors.Surface
+        ),
+        content = content
+    )
+}
+```
+
+### Hilt DI 配置
+
+> **[WRITE]** `app/build.gradle.kts` 添加 Hilt:
+
+```kotlin
+plugins { id("com.google.dagger.hilt.android") version "2.51" kotlin("kapt") }
+dependencies {
+    implementation("com.google.dagger:hilt-android:2.51")
+    kapt("com.google.dagger:hilt-compiler:2.51")
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+}
+```
+
+> **[WRITE]** `MyApplication.kt`:
+
+```kotlin
+@HiltAndroidApp
+class MyApplication : Application()
+```
+
+> **[WRITE]** `di/AppModule.kt`:
+
+```kotlin
+@Module
+@InstallIn(SingletonComponent::class)
+object AppModule {
+    @Provides @Singleton
+    fun provideDatabase(@ApplicationContext context: Context): AppDatabase {
+        return Room.databaseBuilder(context, AppDatabase::class.java, "app.db").build()
+    }
+
+    @Provides fun provideTaskDao(db: AppDatabase) = db.taskDao()
+    @Provides fun provideRepository(dao: TaskDao) = TaskRepository(dao)
+}
 ```
 
 ### Data Model
@@ -329,6 +380,54 @@ fun TaskCard(task: TaskItem, modifier: Modifier = Modifier) {
 
 ---
 
+### DetailScreen & SettingsScreen
+
+```kotlin
+// ui/screens/detail/DetailScreen.kt
+@Composable
+fun DetailScreen(taskId: String?, onBack: () -> Unit, viewModel: HomeViewModel = hiltViewModel()) {
+    val task = taskId?.let { viewModel.getTask(it) }
+    var title by remember { mutableStateOf(task?.title ?: "") }
+    var priority by remember { mutableIntStateOf(task?.priority ?: 1) }
+
+    Scaffold(
+        topBar = { TopAppBar(
+            title = { Text(if (taskId != null) "编辑任务" else "新建任务") },
+            navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回") } },
+            actions = { TextButton(onClick = {
+                viewModel.saveTask(taskId, title, priority); onBack()
+            }) { Text("保存") } }
+        )}
+    ) { padding ->
+        Column(modifier = Modifier.padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("任务标题") }, modifier = Modifier.fillMaxWidth())
+            Text("优先级", style = MaterialTheme.typography.labelLarge)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("低" to 0, "中" to 1, "高" to 2, "紧急" to 3).forEach { (label, value) ->
+                    FilterChip(selected = priority == value, onClick = { priority = value }, label = { Text(label) })
+                }
+            }
+        }
+    }
+}
+
+// ui/screens/settings/SettingsScreen.kt
+@Composable
+fun SettingsScreen(onBack: () -> Unit) {
+    Scaffold(
+        topBar = { TopAppBar(title = { Text("设置") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回") } }) }
+    ) { padding ->
+        LazyColumn(modifier = Modifier.padding(padding)) {
+            item { SwitchRow("触觉反馈", checked = true, onCheckedChange = {}) }
+            item { InfoRow("版本", "v1.0.0") }
+            item { InfoRow("关于", "© 2026") }
+        }
+    }
+}
+```
+
+---
+
 ## Phase 6: 自测 & Day 1 收尾 (7:30-8:00)
 
 ```bash
@@ -348,18 +447,196 @@ git add -A && git commit -m "Day 1 complete: MVVM + Room + Compose"
 
 ---
 
-## Phase 7-13: Day 2 — 测试/素材/构建/上架
+## Phase 7: 集成测试 (Day 2, 0:00-1:00)
 
-> 结构同 iOS/鸿蒙 SOP，适配 Android 生态:
+### Compose UI 测试
+
+> **[WRITE]** `app/src/androidTest/java/.../HomeScreenTest.kt`:
+
+```kotlin
+@RunWith(AndroidJUnit4::class)
+class HomeScreenTest {
+    @get:Rule val composeTestRule = createComposeRule()
+
+    @Test
+    fun addTask_displaysInList() {
+        composeTestRule.setContent { HomeScreen() }
+        composeTestRule.onNodeWithText("暂无任务").assertExists()
+        composeTestRule.onNodeWithText("添加任务...").performTextInput("Buy milk")
+        composeTestRule.onNodeWithText("添加").performClick()
+        composeTestRule.onNodeWithText("Buy milk").assertExists()
+    }
+}
+```
+
+```bash
+# [SHELL] 运行测试
+./gradlew connectedAndroidTest 2>&1 | tail -10
+```
+
+---
+
+## Phase 8: 性能优化 (Day 2, 1:00-2:00)
+
+```kotlin
+// [WRITE] app/src/main/AndroidManifest.xml — 添加 profileable
+<application android:profileable="true" ...>
+
+// [WRITE] Baseline Profile 生成
+// 在 Android Studio: Run → Generate Baseline Profile
+```
+
+```bash
+# [SHELL] R8 混淆检查
+./gradlew assembleRelease
+# 检查 build/outputs/mapping/ 下的混淆映射
+```
+
+---
+
+## Phase 9: Google Play 素材 (Day 2, 2:00-3:00)
 
 ```
-Phase 7   集成测试 (Espresso + Compose Testing)
-Phase 8   性能优化 (Baseline Profile + R8)
-Phase 9   Google Play 素材 (图标/截图/描述)
-Phase 10  内购 (Google Play Billing Library 7)
-Phase 11  签名 (upload keystore) + App Bundle 构建
-Phase 12  Google Play Console 提交审核
-Phase 13  归档
+□ 应用图标: 512×512 px PNG (Play Console → 图形资源)
+□ Feature Graphic: 1024×500 px (商店首页横幅)
+□ 截图: ≥ 2 张 (分辨率 ≥ 1080p)
+□ 应用描述: 短描述 80字符 + 长描述 4000字符
+□ 隐私政策 URL (必须, 可访问)
+□ 内容分级问卷 (Play Console → 政策 → 应用内容)
+```
+
+---
+
+## Phase 10: Google Play Billing (Day 2, 3:00-4:00)
+
+```kotlin
+// [WRITE] app/build.gradle.kts
+dependencies {
+    implementation("com.android.billingclient:billing-ktx:7.0.0")
+}
+
+// BillingManager.kt
+class BillingManager(private val activity: Activity) {
+    private val billingClient = BillingClient.newBuilder(activity)
+        .setListener { billingResult, purchases ->
+            // 处理购买结果
+        }
+        .enablePendingPurchases()
+        .build()
+
+    fun queryProducts() {
+        val params = QueryProductDetailsParams.newBuilder()
+            .setProductList(listOf(
+                QueryProductDetailsParams.Product.newBuilder()
+                    .setProductId("premium_monthly")
+                    .setProductType(BillingClient.ProductType.SUBS)
+                    .build()
+            )).build()
+        billingClient.queryProductDetailsAsync(params) { _, productDetailsList ->
+            // 展示商品列表
+        }
+    }
+
+    fun launchBillingFlow(productDetails: ProductDetails) {
+        val params = BillingFlowParams.newBuilder()
+            .setProductDetailsParamsList(listOf(
+                BillingFlowParams.ProductDetailsParams.newBuilder()
+                    .setProductDetails(productDetails)
+                    .build()
+            )).build()
+        billingClient.launchBillingFlow(activity, params)
+    }
+}
+```
+
+---
+
+## Phase 11: 签名 & App Bundle (Day 2, 4:00-5:00)
+
+```bash
+# [SHELL] 生成上传密钥 (仅首次)
+keytool -genkey -v -keystore upload-keystore.jks \
+  -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+
+# [WRITE] app/build.gradle.kts — 签名配置
+android {
+    signingConfigs {
+        create("release") {
+            storeFile = file("upload-keystore.jks")
+            storePassword = System.getenv("KEYSTORE_PASSWORD")
+            keyAlias = "upload"
+            keyPassword = System.getenv("KEY_PASSWORD")
+        }
+    }
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+    }
+}
+
+# [SHELL] 构建 App Bundle (推荐格式)
+./gradlew bundleRelease
+# 产物: app/build/outputs/bundle/release/app-release.aab
+```
+
+---
+
+## Phase 12: Google Play Console 提交 (Day 2, 5:00-6:30)
+
+> **[DIALOG]** Google Play 审核核心要求:
+
+```
+═══════════════════════════════════════
+Google Play 提交清单 (26 项)
+═══════════════════════════════════════
+
+一、应用信息
+□ 1.1 应用名称 (30字符内)
+□ 1.2 短描述 (80字符) + 长描述 (4000字符)
+□ 1.3 图标 (512×512) + Feature Graphic (1024×500)
+□ 1.4 截图 ≥ 2 张 (手机 + 平板各至少1张)
+
+二、构建 & 签名
+□ 2.1 App Bundle (.aab) 已上传
+□ 2.2 签名密钥安全保管 (upload keystore)
+□ 2.3 versionCode 递增, versionName 正确
+□ 2.4 targetSdkVersion ≥ 34 (Google Play 强制)
+
+三、内容评级
+□ 3.1 完成内容分级问卷
+□ 3.2 年龄分级正确
+□ 3.3 无违规内容
+
+四、隐私 & 安全
+□ 4.1 隐私政策 URL 可访问
+□ 4.2 Data safety 标签已填写
+□ 4.3 敏感权限声明完整
+□ 4.4 无恶意软件
+
+五、测试
+□ 5.1 内部测试轨道已创建 (至少 20 位测试者 或 闭源测试 12人/14天)
+□ 5.2 生产发布前必须完成封闭测试 (2023新规)
+
+═══════════════════════════════════════
+[DIALOG] 用户确认后 → Play Console → 发布 → 提交审核
+审核周期: 通常 1-7 天
+═══════════════════════════════════════
+```
+
+---
+
+## Phase 13: 归档 (Day 2, 6:30-8:00)
+
+```bash
+# [GIT] 最终提交
+git tag v1.0.0
+git add -A && git commit -m "Release v1.0.0 - Google Play submission ready"
+
+echo "🎉 Android App 开发完成!"
+echo "   下一步: Google Play 审核通过后 → 进入运营监控 (operations/App_Operations_SOP.md)"
 ```
 
 ---
