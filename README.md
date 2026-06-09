@@ -32,7 +32,8 @@
 
 | 文档 | 说明 | 行数 |
 |------|------|------|
-| [Web App 2 天开发 SOP](web/Web_App_2Day_Development_SOP.md) | Next.js 14+ + TypeScript + Prisma + Tailwind | 571 |
+| [Web App 2 天开发 SOP](web/Web_App_2Day_Development_SOP.md) | Next.js 14+ + TypeScript + Prisma + Tailwind，前端 | 571 |
+| [后端服务 2 天开发 SOP](backend/Backend_Service_2Day_Development_SOP.md) | Hono + Prisma + JWT + Docker，前后端联调 | 807 |
 
 ### CI/CD
 
