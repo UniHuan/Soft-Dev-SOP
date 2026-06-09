@@ -1904,6 +1904,120 @@ grep -rn '\.width(.*[1-3][0-9])\|\.height(.*[1-3][0-9])' entry/src/main/ets/ --i
 echo "✅ 无障碍扫描完成, 请根据结果补充无障碍属性"
 ```
 
+### Phase 8.2: ArkTS 代码质量 & 安全审计
+
+> **[VALIDATE]** + **[SHELL]** Claude Code 运行 DevEco Studio 代码检查 + 手动审计清单
+
+#### 自动化检查
+
+```bash
+# [SHELL] DevEco Studio CLI 代码检查 (需要 DevEco Studio)
+source /tmp/sop_harmony.env 2>/dev/null && cd ${PROJECT_DIR}
+
+# 1. hvigor 静态分析
+echo "=== ArkTS Lint 检查 ==="
+./hvigorw lint 2>&1 | tail -20
+
+# 2. 编译检查 (开启所有警告)
+echo "=== ArkTS 严格编译 ==="
+./hvigorw assembleHap 2>&1 | grep -iE "warn|error|deprecated" | head -20
+
+# 3. 硬编码检查 (安全)
+echo "=== 硬编码敏感信息扫描 ==="
+grep -rn "password\|api_key\|secret\|token\|sk-" entry/src/main/ets/ --include="*.ets" | \
+  grep -v "//\|example\|test\|placeholder\|TODO" | head -10
+
+# 4. 未使用的 import 检查
+echo "=== 未使用的 import ==="
+grep -rn "^import " entry/src/main/ets/ --include="*.ets" | \
+  sort | uniq -c | sort -rn | head -10
+
+# 5. 文件大小检查 (>300行需拆分)
+echo "=== 大文件检查 (>300行) ==="
+find entry/src/main/ets -name "*.ets" -exec wc -l {} \; | \
+  awk '$1 > 300 {print $1, $2}' | sort -rn | head -10
+```
+
+#### ArkTS 代码规范检查清单
+
+```
+✅ 类型安全
+  □ 无 any/unknown 类型滥用
+  □ 所有函数参数有显式类型
+  □ 所有函数返回值有类型声明
+  □ 使用 interface/class 定义数据结构
+  □ 使用 enum 定义枚举 (非魔法数字)
+
+✅ 组件规范
+  □ @Component struct 命名使用 PascalCase
+  □ @Entry 页面 ≤ 200 行 (复杂页面拆分)
+  □ build() 方法 ≤ 30 行
+  □ build() 内无复杂计算 (提取到方法)
+  □ 私有方法/属性使用 private 关键字
+  □ 不使用 console.log (使用 hilog)
+
+✅ 状态管理
+  □ @State 仅用于组件内状态
+  □ @Prop 用于父→子单向传递 (不修改)
+  □ @Link 用于父↔子双向绑定
+  □ @Provide/@Consume 用于跨层级共享
+  □ 异步数据更新后触发 UI 刷新 (refreshFlag)
+  □ 大列表使用 LazyForEach + IDataSource
+
+✅ 性能
+  □ ForEach 提供唯一 keyGenerator
+  □ 列表使用 LazyForEach (数据 > 50)
+  □ 图片使用 .syncLoad(false) 异步加载
+  □ 避免在 aboutToAppear 中同步耗时操作
+  □ 动画使用系统属性动画 (.animation())
+
+✅ 安全
+  □ 敏感数据存储使用 HUKS (非明文 Preferences)
+  □ 网络通信 HTTPS only
+  □ API Key/Token 不在代码中硬编码
+  □ 日志不输出敏感信息 (密码/Token/PII)
+  □ module.json5 权限声明与使用一致 (最小权限)
+
+✅ 无障碍
+  □ 所有 Image 有 .accessibilityText()
+  □ 所有 Button 有 .accessibilityText()
+  □ 触摸目标 ≥ 48vp
+  □ 装饰性图像标记 .accessibilityLevel('no')
+  □ 复杂组件设置 .accessibilityGroup(true)
+
+✅ 资源管理
+  □ 字符串使用 $r('app.string.xxx') (非硬编码)
+  □ 颜色使用 $r('app.color.xxx') 或 DesignTokens
+  □ 尺寸使用 vp/fp 单位 (非 px)
+  □ 支持深色模式 (media 资源目录)
+  □ 支持多语言 (element 资源目录)
+```
+
+#### DevEco Studio 手动审计 (用户执行)
+
+```
+[DIALOG] 指导用户在 DevEco Studio 中运行:
+1. Code → Inspect Code → 选择 entry 模块 → OK
+2. 查看 Inspection Results 面板
+3. 重点修复:
+   □ ERROR 级别 → 必须修复
+   □ WARNING 级别 → 目标 < 10
+   □ WEAK WARNING → 按需修复
+4. 修复完成后回复 "代码审计通过"
+```
+
+#### 代码质量门禁
+
+```
+以下条件全部满足方可进入 Phase 9:
+□ ./hvigorw assembleHap 无 ERROR
+□ ./hvigorw lint 无 ERROR
+□ 无硬编码密钥/Token
+□ 无 >300 行的单个 .ets 文件
+□ DevEco Studio Inspection 无 ERROR
+□ 用户确认 "代码审计通过"
+```
+
 ---
 
 ## Phase 9: AppGallery 素材 & 元数据 (Day 2, 2:00-3:30)

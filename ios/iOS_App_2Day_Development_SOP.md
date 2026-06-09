@@ -4118,7 +4118,82 @@ xcodebuild build \
 
 > **Claude Code 执行**: 逐项完成后 → `git commit -m "Add comprehensive HIG accessibility compliance"`
 
-### Step 8.3 — 隐私清单 (Privacy Manifest)
+### Step 8.3 — Swift 代码质量 & 安全审计
+
+> **[SHELL]** + **[VALIDATE]** Claude Code 运行自动化检查 + 手动审计清单
+
+```bash
+# [SHELL] 1. SwiftLint 静态分析
+if which swiftlint >/dev/null; then
+  swiftlint lint --reporter xcode 2>&1 | tail -20
+else
+  echo "⚠️ SwiftLint 未安装: brew install swiftlint"
+fi
+
+# [SHELL] 2. 编译警告检查
+xcodebuild build \
+  -project ${PROJECT_NAME}.xcodeproj \
+  -scheme ${PROJECT_NAME} \
+  -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+  2>&1 | grep -i "warning" | head -10
+
+# [SHELL] 3. 硬编码敏感信息扫描
+grep -rn "apiKey\|api_key\|secret\|password\|token" ${PROJECT_NAME}/ \
+  --include="*.swift" | grep -v "//\|example\|test\|Keychain" | head -10
+
+# [SHELL] 4. 大文件检查 (>400行)
+find ${PROJECT_NAME} -name "*.swift" -exec wc -l {} \; | \
+  awk '$1 > 400 {print $1, $2}' | sort -rn | head -10
+
+# [SHELL] 5. 强制解包检查 (可能导致崩溃)
+grep -rn '!' ${PROJECT_NAME}/ --include="*.swift" | \
+  grep -v "//\|#warning\|test\|Preview\|as!\|try!" | head -10
+```
+
+**Swift 代码规范检查清单**:
+
+```
+✅ 类型安全
+  □ 无强制解包 (!) (使用 guard let / if let)
+  □ 无隐式可选类型滥用
+  □ 使用 enum 管理状态 (非魔法字符串)
+  □ 协议声明使用 any Protocol (Swift 5.7+)
+
+✅ SwiftUI 规范
+  □ View body 简洁 (≤ 30 行)
+  □ 复杂 View 拆分为子组件
+  □ @StateObject 用于创建, @ObservedObject 用于接收
+  □ 无过度使用 @EnvironmentObject (限制 2-3 个)
+
+✅ 安全
+  □ 敏感数据使用 Keychain (非 UserDefaults)
+  □ API Key 不在代码中硬编码 (使用 xcconfig)
+  □ 网络请求使用 HTTPS (App Transport Security)
+  □ 输入验证完整 (防注入)
+
+✅ 性能
+  □ List/ScrollView 使用 LazyVStack/LazyVGrid
+  □ 图片异步加载 (AsyncImage)
+  □ 无主线程阻塞操作 (await async)
+  □ 使用 debounce 限制搜索/输入频率
+
+✅ 资源管理
+  □ 字符串使用 NSLocalizedString (非硬编码)
+  □ 颜色使用 Asset Catalog (支持深色模式)
+  □ 图片使用 Asset Catalog (@2x/@3x)
+```
+
+**代码质量门禁**:
+```
+以下条件全部满足方可进入 Phase 9:
+□ xcodebuild build 无 ERROR + 无 WARNING
+□ SwiftLint 无 ERROR (WARNING < 10)
+□ 无硬编码密钥/Token
+□ 无 >400 行单个 .swift 文件
+□ 无强制解包 (!) 滥用
+```
+
+### Step 8.4 — 隐私清单 (Privacy Manifest)
 
 Apple 从 2024 年起要求 Privacy Manifest。Claude Code 创建:
 
