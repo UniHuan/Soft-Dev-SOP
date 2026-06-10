@@ -59,6 +59,14 @@
 | [软著申请 SOP](copyright/Software_Copyright_Application_SOP.md) | 从材料准备到领证，8 Phase | 1,269 |
 | [开发→上架→软著流水线](pipeline/App_Development_to_Copyright_Full_Pipeline.md) | iOS 开发与软著申请交叉复用指南 | 709 |
 
+### 🆕 规划中 (即将推出)
+
+| 文档 | 说明 | 状态 |
+|------|------|------|
+| 小程序 App 2 天开发 SOP | uni-app + Vue 3 + TypeScript，微信/支付宝/抖音三端 | 📝 设计完成 |
+| Cocos Creator 游戏开发 SOP | 5阶段完整流程，微信/抖音/快手小游戏 | 📝 设计完成 |
+| sop-test 测试自动化工具 | 统一测试CLI，支持7平台 | 📝 设计完成 |
+
 ---
 
 ## 🚀 快速开始
@@ -96,11 +104,44 @@ Claude Code 会读取对应的 SOP 文件，按 Phase 顺序全自动执行。
 | 指标 | 数值 |
 |------|------|
 | SOP 文档数 | 16 |
-| 总行数 | 17,900+ |
+| 设计文档数 | 3 |
+| 计划文档数 | 3 |
+| 总行数 | 22,000+ |
 | Phase/Step 总数 | 100+ Phase，250+ Step |
 | 技能标注密度 | 每个 Step 1-3 个技能标签 |
 | 编译验证点 | 50+ 处 |
 | 覆盖平台 | iOS、Android、HarmonyOS、Web、后端、软著、CI/CD、运营、流程、安全 |
+
+---
+
+## 📁 文档目录结构
+
+```
+SOP/
+├── ios/                    # iOS 开发
+├── harmonyos/              # 鸿蒙开发
+├── android/                # Android 开发
+├── web/                    # Web 前端开发
+├── backend/                # 后端服务开发
+├── miniprogram/            # 小程序开发 (规划中)
+├── game/                   # 游戏开发 (规划中)
+├── cicd/                   # CI/CD 集成
+├── copyright/              # 软著申请
+├── operations/             # 运营监控
+├── pipeline/               # 全流程流水线
+├── process/                # 开发流程 & 质量
+├── tools/                  # 工具 (规划中)
+├── docs/
+│   └── superpowers/
+│       ├── specs/          # 设计文档
+│       └── plans/          # 实现计划
+├── README.md
+├── USER_MANUAL.md
+├── QUICK_START.md
+├── CHANGELOG.md
+├── CLAUDE.md
+└── CONTRIBUTING.md
+```
 
 ---
 
@@ -113,4 +154,4 @@ Claude Code 会读取对应的 SOP 文件，按 Phase 顺序全自动执行。
 
 ---
 
-> **维护**: 持续审查中 | **最后更新**: 2026-06-08
+> **维护**: 持续审查中 | **最后更新**: 2026-06-10
