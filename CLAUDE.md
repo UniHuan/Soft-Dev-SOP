@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Purpose
 
-This repo contains SOP (Standard Operating Procedure) documentation for fully automated app development using Claude Code + IDE. Covers iOS (SwiftUI+Xcode), HarmonyOS (ArkTS+DevEco Studio), and software copyright application.
+This repo contains SOP (Standard Operating Procedure) documentation for fully automated app development using Claude Code + IDE, plus creative content workflows (AI novel writing + short drama video production). Covers iOS (SwiftUI+Xcode), HarmonyOS (ArkTS+DevEco Studio), software copyright, and creative content.
 
 ## Key Files
 
@@ -28,6 +28,7 @@ This repo contains SOP (Standard Operating Procedure) documentation for fully au
 | `process/ASO_Growth_SOP.md` | 131 | App Store Optimization |
 | `process/API_Design_SOP.md` | 107 | RESTful API standards |
 | `process/Security_Best_Practices_SOP.md` | 153 | OWASP + encryption + auth |
+| `creative/Novel_to_Short_Drama_SOP.md` | 1,598 | Novel writing + short drama video — 10 Phases |
 | **Reference** | | |
 | `ios/HIG_KNOWLEDGE_BASE.md` | 493 | Apple HIG for `[RESEARCH]` |
 | `harmonyos/HarmonyOS_Development_Guide.md` | 1,883 | HarmonyOS dev specs for `[RESEARCH]` |

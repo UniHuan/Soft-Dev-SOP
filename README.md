@@ -59,6 +59,12 @@
 | [软著申请 SOP](copyright/Software_Copyright_Application_SOP.md) | 从材料准备到领证，8 Phase | 1,269 |
 | [开发→上架→软著流水线](pipeline/App_Development_to_Copyright_Full_Pipeline.md) | iOS 开发与软著申请交叉复用指南 | 709 |
 
+### 创意内容创作
+
+| 文档 | 说明 | 行数 |
+|------|------|------|
+| [📖 小说创作 & 短剧制作 SOP](creative/Novel_to_Short_Drama_SOP.md) | Claude Code 撰写 10 万字小说 + 小云雀 2.0 制作短剧视频，10 Phase | 1,598 |
+
 ### 🆕 规划中 (即将推出)
 
 | 文档 | 说明 | 状态 |
@@ -103,7 +109,7 @@ Claude Code 会读取对应的 SOP 文件，按 Phase 顺序全自动执行。
 
 | 指标 | 数值 |
 |------|------|
-| SOP 文档数 | 16 |
+| SOP 文档数 | 17 |
 | 设计文档数 | 3 |
 | 计划文档数 | 3 |
 | 总行数 | 22,000+ |
@@ -124,6 +130,7 @@ SOP/
 ├── web/                    # Web 前端开发
 ├── backend/                # 后端服务开发
 ├── miniprogram/            # 小程序开发 (规划中)
+├── creative/               # 创意内容创作 (小说+短剧)
 ├── game/                   # 游戏开发 (规划中)
 ├── cicd/                   # CI/CD 集成
 ├── copyright/              # 软著申请
