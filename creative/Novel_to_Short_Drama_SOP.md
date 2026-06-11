@@ -42,30 +42,33 @@
 
 ```
 Day 1 (8h) — 规划与大纲                     Day 2 (8h) — 第一幕创作
-├─ [0.0h] 项目初始化                        ├─ [0.0h] 第 1-3 章 (开放)
-├─ [0.5h] 题材/类型确认                      ├─ [2.5h] 第 4-6 章 (铺垫)
-├─ [1.5h] 三幕结构设计                       ├─ [5.0h] 第 7-9 章 (激励事件)
-├─ [2.5h] 人物小传                           └─ [8.0h] 字数验收 & Git 提交
-├─ [4.0h] 分章大纲 (30-40章)
-├─ [6.0h] 世界观设定
+├─ [0.0h] 项目初始化                        ├─ [0.0h] 第 1-2 章 (开场+伏笔)
+├─ [0.5h] 题材/类型确认                      ├─ [1.5h] 第 3 章 (激励事件 ★★★★★)
+├─ [1.5h] 三幕结构设计 (填充31章关键事件)     ├─ [3.0h] 第 4-5 章 (拒绝召唤→被迫出发)
+├─ [3.0h] 分章大纲 (31章逐一生成)            ├─ [5.0h] 第 6-7 章 (初入新世界→第一次考验)
+├─ [4.5h] 人物小传 (含真实姓名/背景/对白)     ├─ [6.5h] 第 8 章 (第一幕高潮 ★★★★★)
+├─ [6.0h] 世界观+文体风格指南                 └─ [8.0h] 字数验收 & Git 提交
 └─ [8.0h] 总纲验收
 
-Day 3 (8h) — 第二幕创作                     Day 4 (8h) — 第三幕创作
-├─ [0.0h] 第 10-13 章 (对抗升级)             ├─ [0.0h] 第 21-24 章 (高潮前奏)
-├─ [2.5h] 第 14-17 章 (中间转折)             ├─ [2.5h] 第 25-28 章 (高潮)
-├─ [5.0h] 第 18-20 章 (至暗时刻)             ├─ [5.0h] 第 29-32 章 (结局)
-└─ [8.0h] 字数验收 & 连贯性检查               └─ [8.0h] 第 33-36 章 (尾声)
+Day 3 (8h) — 第二幕创作                     Day 4 (8h) — 第二幕+第三幕
+├─ [0.0h] 第 9-11 章 (上升行动)              ├─ [0.0h] 第 19-20 章 (假高潮→至暗时刻)
+├─ [2.0h] 第 12-14 章 (暗流→第一次挫败)      ├─ [2.5h] 第 21-22 章 (顿悟→最终准备)
+├─ [4.0h] 第 15-16 章 (中间转折 ★★★★★)      ├─ [4.5h] 第 23-24 章 (B故事→对决开始)
+├─ [6.0h] 第 17-18 章 (反击→高潮铺垫)        ├─ [6.5h] 第 25-27 章 (拉锯→高潮→尘埃落定)
+└─ [8.0h] 阶段性审查                          └─ [8.0h] 第 28-31 章 (结局→尾声)
 
 Day 5 (4h) — 编辑润色                         Day 6 (4h) — 短剧改编
-├─ [0.0h] 全局通读 & 错别字检查               ├─ [0.0h] 分集大纲 (10-30 集)
-├─ [1.0h] 人物弧光一致性审核                 ├─ [1.0h] 场景分镜脚本
-├─ [2.0h] 节奏调整 & 删除冗余                 ├─ [2.0h] 对白精炼
-└─ [4.0h] 终稿定稿                            └─ [4.0h] 小云雀导入文件准备
+├─ [0.0h] 分块通读 (5轮×3章)                 ├─ [0.0h] 改编方法论学习
+├─ [1.0h] 一致性审查 (基于摘要)               ├─ [0.5h] 分集策略 (20-25集)
+├─ [2.0h] 文体一致性审查 (AI套路化排查)       ├─ [1.5h] 逐集剧本生成 (含视觉提示)
+├─ [3.0h] 文笔润色                             ├─ [3.0h] 对白精炼 & 卡点优化
+└─ [4.0h] 终稿定稿                             └─ [4.0h] 小云雀导入文件准备
 
 Day 7 (4h) — 视频制作
 ├─ [0.0h] 小云雀 2.0 项目创建
 ├─ [1.0h] 逐集导入脚本 & AI 生成
 ├─ [2.5h] 视频审核 & 替换调整
+├─ [3.5h] 后期制作 (封面/字幕/BGM)
 └─ [4.0h] 全集导出 & 归档
 ```
 
@@ -100,7 +103,7 @@ df -h "$PROJECT_ROOT" | tail -1
 PROJECT_NAME="novel_$(date +%Y%m%d)"
 PROJECT_DIR="$PROJECT_ROOT/novels/$PROJECT_NAME"
 
-cat > /tmp/sop_novel.env << ENVEOF
+cat > "$PROJECT_DIR/.sop_novel.env" << ENVEOF
 PROJECT_NAME="$PROJECT_NAME"
 PROJECT_DIR="$PROJECT_DIR"
 NOVEL_DIR="$PROJECT_DIR/novel"
@@ -111,7 +114,7 @@ DAILY_TARGET=25000
 CREATED_AT="$(date '+%Y-%m-%d %H:%M:%S')"
 ENVEOF
 
-source /tmp/sop_novel.env
+source "$PROJECT_DIR/.sop_novel.env"
 
 # 创建目录结构
 mkdir -p "$NOVEL_DIR/chapters"       # 章节目录
@@ -129,7 +132,7 @@ echo "✅ 项目目录创建完成: $PROJECT_DIR"
 
 ```bash
 # [WRITE] 创建 meta.yaml
-source /tmp/sop_novel.env
+source "$PROJECT_DIR/.sop_novel.env"
 cat > "$NOVEL_DIR/meta.yaml" << 'META'
 小说标题: (待定)
 作者: 
@@ -146,12 +149,12 @@ META
 
 ```bash
 # [SHELL] 创建进度追踪脚本
-source /tmp/sop_novel.env
+source "$PROJECT_DIR/.sop_novel.env"
 cat > "$PROJECT_DIR/logs/progress.sh" << 'SCRIPT'
 #!/bin/bash
-source /tmp/sop_novel.env 2>/dev/null
+source "$PROJECT_DIR/.sop_novel.env" 2>/dev/null
 if [ -d "$NOVEL_DIR/chapters" ]; then
-  CHINESE_CHARS=$(cat "$NOVEL_DIR/chapters"/*.md 2>/dev/null | grep -oP '[\x{4e00}-\x{9fff}\x{3400}-\x{4dbf}\x{f900}-\x{faff}]' | wc -l | tr -d ' ')
+  CHINESE_CHARS=$(cat "$NOVEL_DIR/chapters"/*.md 2>/dev/null | perl -CS -ne 'while(/([\x{4e00}-\x{9fff}\x{3400}-\x{4dbf}\x{f900}-\x{faff}])/g){$c++} END{print $c}')
 else
   CHINESE_CHARS=0
 fi
@@ -171,7 +174,7 @@ chmod +x "$PROJECT_DIR/logs/progress.sh"
 
 ```bash
 # [GIT]
-source /tmp/sop_novel.env
+source "$PROJECT_DIR/.sop_novel.env"
 cd "$PROJECT_DIR"
 git init
 git checkout -b main
@@ -261,7 +264,7 @@ git commit -m "chore: initialize novel project structure
 
 ```bash
 # [WRITE] 创建核心卖点文件
-source /tmp/sop_novel.env
+source "$PROJECT_DIR/.sop_novel.env"
 cat > "$NOVEL_DIR/outlines/00_core_pitch.md" << 'PITCH'
 # 核心卖点 (用于后续宣传和短剧标题)
 
@@ -284,7 +287,7 @@ PITCH
 
 ```bash
 # [GIT]
-source /tmp/sop_novel.env
+source "$PROJECT_DIR/.sop_novel.env"
 cd "$PROJECT_DIR"
 git add -A
 git commit -m "feat(phase-1): 小说定位与题材确认"
@@ -298,108 +301,192 @@ git commit -m "feat(phase-1): 小说定位与题材确认"
 
 > **[RESEARCH]** + **[GENERATE]** + **[WRITE]** 基于类型定义构建完整故事结构 → 分章大纲
 
-### Step 2.1 — 三幕结构设计
+### Step 2.1 — 三幕结构设计 (含具体剧情)
 
-> **[RESEARCH]** Claude Code 回顾核心卖点和类型 → **[GENERATE]** 三幕结构
+> **[RESEARCH]** Claude Code 回顾 Phase 1 确认的题材、梗概、卖点
+> → **[GENERATE]** 生成完整的三幕结构，**必须填充每个章节的具体剧情事件**
+
+```
+[GENERATE] Claude Code 执行指令:
+
+基于 Phase 1 确认的 [题材] 和 [一句话梗概]，现在生成完整的三幕结构。
+对以下模板中的每一章，写出该章的具体"关键事件"（不是"展示主角常态生活"这种泛泛描述，
+而是"林薇在第7次相亲失败后，在咖啡厅收到了匿名的第13封情书"这种具体事件）。
+
+要求:
+1. 每章的"关键事件"必须是 15-30 字的具体剧情描述
+2. 所有章节的事件串联起来就是一个完整的故事
+3. 冲突等级 ★ 的数量必须与事件的实际冲击力匹配
+4. 标注每章预计字数
+
+以下是30章结构框架，请逐章填充:
+```
 
 ```bash
-# [WRITE] 创建三幕结构文档
-source /tmp/sop_novel.env
+# [WRITE] 先创建结构框架文件，Claude Code 随后逐章填充具体内容
+source "$PROJECT_DIR/.sop_novel.env"
 cat > "$NOVEL_DIR/outlines/01_three_act_structure.md" << 'STRUCTURE'
 # 三幕结构 — 10万字小说框架
 
+> ⚠️ 以下每章的"关键事件"必须由 Claude Code [GENERATE] 填充为具体剧情，
+> 不能保留"展示主角常态生活"这类泛泛模板文字。
+
 ## 第一幕: 开局 (约 25,000 字 / 8-10 章)
 
-| 章节 | 功能 | 关键事件 | 冲突等级 |
-|------|------|---------|---------|
-| 第1章 | 日常世界 | 展示主角常态生活 | ★ |
-| 第2章 | 伏笔埋设 | 暗示即将到来的改变 | ★★ |
-| 第3章 | 激励事件 | 打破常态的重大事件 | ★★★★★ |
-| 第4章 | 拒绝召唤 | 主角犹豫/抗拒改变 | ★★★ |
-| 第5章 | 被迫出发 | 外部压力迫使行动 | ★★★★ |
-| 第6章 | 初入新世界 | 遇到新环境/新人物 | ★★★ |
-| 第7章 | 第一次考验 | 小试牛刀/建立自信 | ★★★★ |
-| 第8章 | 第一幕高潮 | 做出不可逆的选择 | ★★★★★ |
+| 章节 | 功能 | 关键事件 (具体剧情) | 预计字数 | 冲突 |
+|------|------|---------|---------|------|
+| 第1章 | 日常世界 | [GENERATE: 15-30字的具体事件描述] | 3000 | ★ |
+| 第2章 | 伏笔埋设 | [GENERATE: 暗示改变的具体事件] | 3000 | ★★ |
+| 第3章 | 激励事件 | [GENERATE: 颠覆日常的重大事件] | 3000 | ★★★★★ |
+| 第4章 | 拒绝召唤 | [GENERATE: 主角抗拒的具体表现] | 3000 | ★★★ |
+| 第5章 | 被迫出发 | [GENERATE: 迫使行动的外部压力] | 3000 | ★★★★ |
+| 第6章 | 初入新世界 | [GENERATE: 新环境/人物的具体场景] | 3000 | ★★★ |
+| 第7章 | 第一次考验 | [GENERATE: 小试牛刀的具体挑战] | 3000 | ★★★★ |
+| 第8章 | 第一幕高潮 | [GENERATE: 不可逆的关键选择] | 3500 | ★★★★★ |
 
-## 第二幕: 对抗 (约 50,000 字 / 14-18 章)
+## 第二幕: 对抗 (约 50,000 字 / 16-18 章)
 
-| 章节 | 功能 | 关键事件 | 冲突等级 |
-|------|------|---------|---------|
-| 第9章 | 上升行动 | 正面迎战第一个障碍 | ★★★★ |
-| 第10章 | 盟友与敌人 | 人际关系网络展开 | ★★★ |
-| 第11章 | 小胜 | 取得阶段性胜利 | ★★★ |
-| 第12章 | 暗流涌动 | 敌人的反击酝酿 | ★★★★ |
-| 第13章 | 第一次挫败 | 计划受挫/损失 | ★★★★★ |
-| 第14章 | 至暗时刻前奏 | 局势恶化 | ★★★★ |
-| 第15章 | 中间转折 | 发现关键线索/真相 | ★★★★★ |
-| 第16章 | 重新振作 | 调整策略/获得新力量 | ★★★ |
-| 第17章 | 反击开始 | 主动出击 | ★★★★ |
-| 第18章 | 高潮铺垫 | 逐步逼近核心冲突 | ★★★★ |
-| 第19章 | 假高潮 | 看似胜利实则陷阱 | ★★★★★ |
-| 第20章 | 至暗时刻 | 最低谷/最绝望 | ★★★★★ |
-| 第21章 | 顿悟 | 发现核心真相/解决办法 | ★★★★ |
-| 第22章 | 最终准备 | 整合资源/集结力量 | ★★★ |
+| 章节 | 功能 | 关键事件 (具体剧情) | 预计字数 | 冲突 |
+|------|------|---------|---------|------|
+| 第9章 | 上升行动 | [GENERATE] | 3000 | ★★★★ |
+| 第10章 | 盟友与敌人 | [GENERATE] | 2500 | ★★★ |
+| 第11章 | 小胜 | [GENERATE] | 2500 | ★★★ |
+| 第12章 | 暗流涌动 | [GENERATE] | 3000 | ★★★★ |
+| 第13章 | 第一次挫败 | [GENERATE] | 3500 | ★★★★★ |
+| 第14章 | 至暗时刻前奏 | [GENERATE] | 3000 | ★★★★ |
+| 第15章 | 中间转折 | [GENERATE] | 3500 | ★★★★★ |
+| 第16章 | 重新振作 | [GENERATE] | 2500 | ★★★ |
+| 第17章 | 反击开始 | [GENERATE] | 3000 | ★★★★ |
+| 第18章 | 高潮铺垫 | [GENERATE] | 3000 | ★★★★ |
+| 第19章 | 假高潮 | [GENERATE] | 3500 | ★★★★★ |
+| 第20章 | 至暗时刻 | [GENERATE] | 3500 | ★★★★★ |
+| 第21章 | 顿悟 | [GENERATE] | 3000 | ★★★★ |
+| 第22章 | 最终准备 | [GENERATE] | 2500 | ★★★ |
+| 第23章 | B故事收束 | [GENERATE: 次要人物线收束] | 2500 | ★★★ |
+| 第24章 | 最终对决开始 | [GENERATE] | 3500 | ★★★★★ |
 
 ## 第三幕: 结局 (约 25,000 字 / 8-10 章)
 
-| 章节 | 功能 | 关键事件 | 冲突等级 |
-|------|------|---------|---------|
-| 第23章 | 最终对决开始 | 正面终极对抗 | ★★★★★ |
-| 第24章 | 拉锯战 | 来回拉锯/多次反转 | ★★★★★ |
-| 第25章 | 高潮 | 决定性的一击 | ★★★★★ |
-| 第26章 | 尘埃落定 | 揭示后果 | ★★★★ |
-| 第27章 | 新平衡 | 世界恢复/重建 | ★★★ |
-| 第28章 | 回报 | 主角获得成长/奖励 | ★★ |
-| 第29章 | 告别 | 重要关系的交代 | ★★★ |
-| 第30章 | 尾声 | 升华主题/余韵 | ★ |
+| 章节 | 功能 | 关键事件 (具体剧情) | 预计字数 | 冲突 |
+|------|------|---------|---------|------|
+| 第25章 | 拉锯战 | [GENERATE] | 3500 | ★★★★★ |
+| 第26章 | 高潮 | [GENERATE] | 3500 | ★★★★★ |
+| 第27章 | 尘埃落定 | [GENERATE] | 2500 | ★★★★ |
+| 第28章 | 新平衡 | [GENERATE] | 2000 | ★★★ |
+| 第29章 | 回报 | [GENERATE] | 2000 | ★★ |
+| 第30章 | 告别 | [GENERATE] | 2500 | ★★★ |
+| 第31章 | 尾声 | [GENERATE] | 2000 | ★ |
+
+> **总章数: 31章 | 总预计字数: ~100,000字**
+> 如果31章字数不够10万，Claude Code 可在第二幕增加2-3章(B故事展开/支线冲突)
 STRUCTURE
+
+# [GENERATE] Claude Code 现在必须执行:
+# 逐行读取上面的表格，将每个 "[GENERATE: ...]" 和 "[GENERATE]"
+# 替换为具体的小说剧情事件描述（15-30字/事件）。
+# 所有事件串联后应构成一个逻辑自洽的完整故事。
+# 完成后用 [VALIDATE] 检查: 事件之间是否有因果链? 冲突是否逐章升级?
 ```
 
-### Step 2.2 — 每章详细大纲 (300-500字/章)
+### Step 2.1b — 三幕结构验证
 
-> **[GENERATE]** Claude Code 为每章生成详细大纲
+> **[VALIDATE]** 生成完成后自动验证三幕结构质量
+
+```
+[VALIDATE] 三幕结构自检:
+□ 从第1章到第31章的事件能串成一条因果链吗? (A导致B，B导致C...)
+□ 激励事件(第3章)是否足够打破主角的日常世界?
+□ 第一幕高潮(第8章)后，主角还能回到原来的生活吗? (不能才对)
+□ 中间转折(第15章)是否真正改变了故事走向?
+□ 至暗时刻(第20章)是否让主角失去了一切?
+□ 结局前是否所有主要伏笔都有对应的回收章节?
+□ 每个 ★★★★★ 的章节是否真的有关键转折?
+□ 是否避免了"巧合救场"? (主角必须主动行动)
+```
+
+### Step 2.2 — 每章详细大纲 (31章逐一生成)
+
+> **[GENERATE]** Claude Code 为三幕结构中的每一章生成 300-500 字的详细大纲。
+> **关键**: 不是生成一个空模板，而是基于 Step 2.1 中已填充的具体"关键事件"，
+> 为每章展开为完整的大纲。
+
+```
+[GENERATE] Claude Code 逐章执行指令:
+
+现在基于 Step 2.1 三幕结构中已填充的具体关键事件，
+为第1章到第31章的每一章生成详细大纲。
+
+每章大纲必须包含以下内容 (300-500字):
+
+1. 章节标题: 有吸引力的标题 (不是"第X章"，而是"错位的第七年"这类)
+2. 剧情概要: 150-200字的本章内容概括
+3. 核心冲突: 外部冲突(人物vs人物/环境) + 内部冲突(主角内心)
+4. 关键场景(3-5个): 每个场景的地点+出场人物+发生的事情+叙事目的
+5. 情感曲线: 开篇情绪 → 中段变化 → 结尾情绪
+6. 本章伏笔: 本章新埋设的伏笔(编号Fxx)
+7. 回收伏笔: 本章回收的前期伏笔(编号Fxx)
+8. 钩子: 章末留下的悬念
+
+格式: 将31章大纲写入 $NOVEL_DIR/outlines/02_chapter_outlines.md
+```
 
 ```bash
-# [WRITE] 创建分章大纲模板
-source /tmp/sop_novel.env
-cat > "$NOVEL_DIR/outlines/02_chapter_outlines.md" << 'OUTLINE'
-# 分章详细大纲
+# [WRITE] Claude Code 逐章写入大纲文件
+# 文件结构: 每个章节用 ## 标题分隔
+source "$PROJECT_DIR/.sop_novel.env"
+cat > "$NOVEL_DIR/outlines/02_chapter_outlines.md" << 'OUTLINE_HEAD'
+# 分章详细大纲 (31章)
 
-## 第 N 章大纲模板
+> ⚠️ 以下31章大纲必须由 Claude Code [GENERATE] 逐章填充具体内容。
+> 每个 ## 标记的是 Claude Code 需要生成实际大纲的占位章节。
 
-### 章节: "[章节标题]"
-- **字数目标**: 2,500-3,500 字
-- **时间线**: [故事内时间]
-- **场景**: [地点]
-- **出场人物**: [角色A、角色B...]
+OUTLINE_HEAD
+
+# Claude Code 必须为每章生成以下格式的大纲:
+for ch in $(seq 1 31); do
+  cat >> "$NOVEL_DIR/outlines/02_chapter_outlines.md" << CHAPTER
+## 第${ch}章: [GENERATE: 有吸引力的章节标题]
 
 ### 剧情概要
-[150-200字概括本章内容]
+[GENERATE: 150-200字]
 
 ### 核心冲突
-- **外部冲突**: [人物 vs 人物/环境/社会...]
-- **内部冲突**: [主角内心的矛盾/挣扎...]
+- 外部: [GENERATE]
+- 内部: [GENERATE]
 
-### 关键场景 (3-5个)
-1. [场景一描述] — 目的: [推进剧情/展示人物/埋设伏笔...]
-2. [场景二描述] — 目的: [...]
-3. [场景三描述] — 目的: [...]
+### 关键场景
+1. [GENERATE: 地点+人物+事件+目的]
+2. [GENERATE]
+3. [GENERATE]
+(如有必要可增加第4-5个场景)
 
 ### 情感曲线
-开始: [情绪] → 发展: [情绪变化] → 结束: [情绪落点]
+[GENERATE: 开篇情绪] → [GENERATE: 中段变化] → [GENERATE: 结尾情绪]
 
-### 短剧适配标记
-- 本集对白密集度: 高/中/低
-- 视觉冲击点: [关键画面描述]
-- 钩子/悬念: [章末留下的悬念]
-OUTLINE
+### 伏笔管理
+- 新埋: [GENERATE: Fxx - 伏笔内容]
+- 回收: [GENERATE: Fxx - 来自前期]
+
+### 章末钩子
+[GENERATE: 1-2句话的悬念，迫使读者必须读下一章]
+
+---
+CHAPTER
+done
+
+echo "✅ 31章大纲框架已创建，Claude Code 必须逐章 [GENERATE] 填充内容"
 ```
+
+> **[VALIDATE]** 31章大纲生成完毕后:
+> - 检查所有伏笔编号 F01-Fxx 是否构成完整的埋设→回收闭环
+> - 检查每章的钩子是否与下一章开头呼应
+> - 将伏笔信息同步更新到 `03_foreshadowing_matrix.md`
 
 ### Step 2.3 — 全篇伏笔 & 反转表
 
 ```bash
 # [WRITE] 创建伏笔追踪矩阵
-source /tmp/sop_novel.env
+source "$PROJECT_DIR/.sop_novel.env"
 cat > "$NOVEL_DIR/outlines/03_foreshadowing_matrix.md" << 'MATRIX'
 # 伏笔 & 反转追踪矩阵
 
@@ -422,7 +509,7 @@ MATRIX
 
 ```bash
 # [SHELL] 大纲字数统计
-source /tmp/sop_novel.env
+source "$PROJECT_DIR/.sop_novel.env"
 echo "=== 大纲统计 ==="
 find "$NOVEL_DIR/outlines" -name "*.md" -exec wc -m {} \;
 echo "总大纲字数: $(find "$NOVEL_DIR/outlines" -name "*.md" -exec cat {} \; | wc -m) 字符"
@@ -448,62 +535,104 @@ git commit -m "feat(phase-2): 三幕结构与分章大纲完成
 
 > **[GENERATE]** + **[WRITE]** + **[REVIEW]** 创建完整人物小传 → 人物关系网 → 世界观设定文档
 
-### Step 3.1 — 主要人物小传
+### Step 3.1 — 主要人物小传 (含真实填充)
 
-> **[GENERATE]** Claude Code 基于大纲生成人物小传 (每个主要角色 800-1500 字)
+> **[GENERATE]** Claude Code 基于 Phase 2 的大纲与三幕结构，生成 3-5 个主要角色的完整小传。
+> **关键**: 不是生成空模板，而是为每个角色写出具体的人物设定。
+> 角色姓名、身份、背景故事必须是针对本小说的原创内容。
+
+```
+[GENERATE] Claude Code 执行指令:
+
+基于 Phase 2 的三幕结构和分章大纲，现在为小说创建 3-5 个主要角色。
+每个角色的小传 800-1500 字，必须包含以下所有维度的具体内容:
+
+角色清单:
+- 主角 (推动故事的核心人物)
+- 主角的对立面/反派
+- 主角的情感对象/伙伴 (如有)
+- 导师/关键助攻角色
+- 可选: B故事线主角
+
+对每个角色，逐项生成以下内容 (不能留空):
+```
 
 ```bash
-# [WRITE] 创建主要人物小传文件
-source /tmp/sop_novel.env
-cat > "$NOVEL_DIR/characters/01_main_characters.md" << 'CHARS'
+source "$PROJECT_DIR/.sop_novel.env"
+cat > "$NOVEL_DIR/characters/01_main_characters.md" << 'CHARS_HEAD'
 # 主要人物小传
 
-## 人物小传模板
+> ⚠️ 以下每个角色的 [GENERATE] 标记必须由 Claude Code 替换为具体内容。
+> 角色必须有真实姓名、具体年龄、独特的外貌和性格。不能使用"待定"等占位符。
+
+CHARS_HEAD
+
+# Claude Code 为每个主要角色执行一次 [GENERATE]，格式如下:
+for ROLE in "主角" "反派/对立面" "情感对象/伙伴" "导师/关键助攻" "B故事主角(可选)"; do
+  cat >> "$NOVEL_DIR/characters/01_main_characters.md" << ROLE_TEMPLATE
+## 角色: [GENERATE: 真实姓名 — $ROLE]
 
 ### 基础信息
-- **姓名**: (含寓意/来源)
-- **年龄**: 
-- **职业/身份**: 
-- **外貌特征**: (3-5个标志性特征，便于短剧视觉呈现)
-  - 例: "左眉有一道细疤"、"永远戴着一条银色十字项链"
-- **标志性动作/口头禅**: 
+- **姓名**: [GENERATE: 含寓意/来源说明。例: 林知意 — "知意"取自"知我意"，暗示她渴望被理解]
+- **年龄**: [GENERATE: 具体数字，与故事背景一致]
+- **职业/身份**: [GENERATE: 具体职业，需在故事中发挥作用]
+- **外貌特征** (3-5个标志性特征，便于短剧视觉呈现):
+  1. [GENERATE: 例 — "左眉尾端有一道细疤，平时用刘海遮住"]
+  2. [GENERATE]
+  3. [GENERATE]
+- **标志性动作**: [GENERATE: 例 — "紧张时反复转动左手无名指上的银戒指"]
+- **口头禅**: [GENERATE: 例 — "你知道我什么意思。" (用于回避正面回答)]
 
 ### 性格维度
-- **外在表现**: (别人眼中的他/她)
-- **真实内心**: (读者知道的他/她)
-- **核心欲望**: (他/她真正想要什么)
-- **最大恐惧**: (他/她最害怕什么)
-- **致命缺陷**: (阻碍他/她的性格弱点)
-- **成长弧光**: 从 [初始状态] → 经历 [关键事件] → 变为 [最终状态]
+- **外在表现** (别人眼中的他/她): [GENERATE: 3-5个形容词 + 行为说明]
+- **真实内心** (只有读者知道的): [GENERATE: 与外在表现的矛盾/反差]
+- **核心欲望** (真正想要什么): [GENERATE: 一句话。这个欲望驱动全书的行动]
+- **最大恐惧** (最害怕什么): [GENERATE: 这个恐惧将在至暗时刻被触发]
+- **致命缺陷** (性格弱点): [GENERATE: 这个缺陷是主角必须克服的成长课题]
+- **成长弧光**: 从「[GENERATE: 初始状态]」→ 经历「[GENERATE: 关键转折事件]」→ 变为「[GENERATE: 最终状态]」
 
-### 背景故事
-[500字以上，包括童年经历、关键转折点、未解决的心理创伤]
+### 背景故事 (500字以上)
+[GENERATE: 包括童年关键经历、形成性格的转折点、未解决的心理创伤、隐藏的秘密。
+不要写泛泛的"他童年不幸"，要写"8岁那年母亲在厨房自杀，他成了第一个发现尸体的人，
+从此无法忍受任何关闭的门。"]
 
 ### 人际关系
-| 关系 | 对象 | 状态演变 | 情感线索 |
-|------|------|---------|---------|
-| 恋人 | [角色] | 初始→发展→结局 | 从 [X] 到 [Y] |
-| 对手 | [角色] | ... | ... |
-| 导师 | [角色] | ... | ... |
+| 关系 | 对象 | 初始状态 | 第8章变化 | 第20章变化 | 结局 |
+|------|------|---------|---------|----------|------|
+| [GENERATE] | [GENERATE: 对方姓名] | [GENERATE] | [GENERATE] | [GENERATE] | [GENERATE] |
+| ... | ... | ... | ... | ... | ... |
 
 ### 人物对白风格
-- **语速**: 快/中/慢
-- **句式**: 长句/短句/反问/设问
-- **常用词**: (3-5个该角色高频使用的词)
-- **禁忌词**: (该角色永远不会说的话)
-- **方言/口癖**: (如有)
+- **语速与节奏**: [GENERATE: 快/中/慢，且说明原因]
+- **句式特点**: [GENERATE: 长句/短句/反问/设问 — 选1-2种并举例]
+- **高频用词**: [GENERATE: 3-5个该角色口头高频使用的词汇]
+- **绝不说的词**: [GENERATE: 该角色性格决定了永远不会说出的话]
+- **口癖/方言**: [GENERATE: 有则写，无则写"标准普通话"]
 
-### 短剧适配
-- **选角建议**: [气质类型/年龄区间]
-- **标志性场景**: [该角色最具视觉记忆点的场景]
-CHARS
+### 短剧视觉适配
+- **选角气质**: [GENERATE: 如 — "清冷御姐型，25-30岁女演员，眼神要有故事感"]
+- **标志性场景**: [GENERATE: 该角色在全剧中视觉记忆最强的1个画面]
+- **服装风格**: [GENERATE: 如 — "职业期: 剪裁利落的西装套装，深色系; 日常: 宽松白衬衫+牛仔裤"]
+- **代表色**: [GENERATE: 如 — "深蓝 — 象征她隐藏的忧伤"]
+
+---
+ROLE_TEMPLATE
+done
+
+echo "✅ 主要人物模板已创建，Claude Code 必须为每个角色 [GENERATE] 具体内容"
 ```
+
+> **[REVIEW]** 人物小传生成完毕后自动检查:
+> - 主要角色之间是否有关系张力? (爱/恨/竞争/保护...)
+> - 每个角色的核心欲望是否与主要冲突直接相关?
+> - 致命缺陷是否会在关键时刻导致角色犯错?
+> - 所有角色的对白风格是否彼此区分? (读者能否不看名字就分辨谁在说话?)
 
 ### Step 3.2 — 次要人物卡片
 
 ```bash
 # [WRITE] 创建次要人物卡片
-source /tmp/sop_novel.env
+source "$PROJECT_DIR/.sop_novel.env"
 cat > "$NOVEL_DIR/characters/02_supporting_characters.md" << 'SUPPORT'
 # 次要人物卡片
 
@@ -522,7 +651,7 @@ SUPPORT
 
 ```bash
 # [WRITE] 创建人物关系矩阵
-source /tmp/sop_novel.env
+source "$PROJECT_DIR/.sop_novel.env"
 cat > "$NOVEL_DIR/characters/03_relationship_map.md" << 'RELATION'
 # 人物关系矩阵
 
@@ -548,7 +677,7 @@ RELATION
 
 ```bash
 # [GENERATE] 根据小说类型生成对应世界观文档
-source /tmp/sop_novel.env
+source "$PROJECT_DIR/.sop_novel.env"
 cat > "$NOVEL_DIR/worldbuilding/01_world_setting.md" << 'WORLD'
 # 世界观设定
 
@@ -575,11 +704,76 @@ cat > "$NOVEL_DIR/worldbuilding/01_world_setting.md" << 'WORLD'
 WORLD
 ```
 
-### Step 3.5 — 人物一致性检查清单
+### Step 3.5 — 文体风格指南 (Style Guide)
+
+> **[WRITE]** 在开始写作前，定义小说的文体风格锚点。这是防止30章 AI 生成内容套路化的关键机制。
+
+```bash
+source "$PROJECT_DIR/.sop_novel.env"
+cat > "$NOVEL_DIR/characters/05_style_guide.md" << 'STYLE'
+# 小说文体风格指南
+
+> 这个文件是整部小说的"写作宪法"。Phase 4-6 的每一章创作前，Claude Code 必须重读本文件。
+
+## 叙事基调
+- **主基调**: [GENERATE: 如 — "冷峻克制中偶有温情流露"、"甜爽轻快但不油腻"]
+- **叙事距离**: [GENERATE: 如 — "第三人称限知视角，跟随主角的主观感受"]
+- **时态**: [GENERATE: 如 — "过去时叙述，对白使用现在时"]
+
+## 句子风格
+- **平均句长**: [GENERATE: 如 — "15-25字的短句为主，情感高潮允许40字长句"]
+- **句式多样性规则**: 连续3段不得以相同句式开头
+- **禁用句式**: [GENERATE: 3-5个AI高频句式，如 "他的眼中闪过一丝..."、"嘴角微微上扬"、"心中涌起一股..."]
+
+## 对白规则
+- **对白:叙述:描写 比例**: 60:20:20 (短剧适配)
+- **对白标签规则**: 禁止连续使用"XX说"，每段对白必须用不同的动作/表情/环境来做标签
+  - ❌ "你好。"他说。"你好。"她说。
+  - ✅ "你好。"他把钥匙放在玄关的托盘上，没有看她。/ "你好。"她的声音比预期中更平静。
+- **口语化标准**: 所有对白写完后朗读检查，删除朗读时不自然的书面语
+
+## 场景描写规则
+- **环境开场**: 每个新场景的前50字必须有1个感官细节 (视觉/听觉/嗅觉/触觉)
+- **描写密度**: 每500字至少1处环境细节更新 (让读者知道角色在哪)
+- **禁用静态描写**: 禁止"房间里有一张桌子、两把椅子"这类清单式描写
+  - ✅ 通过角色的行动展示环境: "她绕过那张堆满文件的桌子，在靠窗的椅子上坐下。"
+
+## 情感表达规则
+- **禁止直接说情绪**: 禁止"他很生气"、"她非常悲伤"
+  - ✅ 用身体反应: "他把咖啡杯重重砸在桌上"、"她的手指开始不受控制地颤抖"
+- **情绪升级阶梯**: 同一情绪在小说中每次出现时，表达方式必须不同且强度递增
+  - 第1次愤怒: 捏紧拳头 → 第2次: 摔东西 → 第3次: 爆发对白
+
+## 避免的 AI 套路化表达
+以下30个高频AI句式在本小说中禁止使用:
+1. "眼中闪过一丝 [情绪]"
+2. "嘴角微微上扬"
+3. "心中涌起一股 [情绪]"
+4. "目光变得 [形容词]"
+5. "转身离开，留下 [XXX] 的背影"
+6. "深吸一口气"
+7. "[XXX]，仿佛 [YYY]"
+8. "在 [XXX] 的同时，[YYY]"
+... (Claude Code 在写作中持续扩充此列表)
+
+## 写作多样性检查
+- 每3章至少变换1次叙事技巧 (倒叙/插叙/多线并行/书信体/新闻体...)
+- 每5章至少出现1个让读者意外的表达方式
+STYLE
+
+echo "✅ 文体风格指南已创建"
+```
+
+> **[VALIDATE]** Style Guide 检查:
+> - 禁用句式 ≥ 5个? ✓
+> - 对白规则是否具体可执行? ✓
+> - 情感表达规则是否给出了替代方案? ✓
+
+### Step 3.6 — 人物一致性检查清单
 
 ```bash
 # [WRITE] 创建角色行为一致性守则
-source /tmp/sop_novel.env
+source "$PROJECT_DIR/.sop_novel.env"
 cat > "$NOVEL_DIR/characters/04_consistency_checklist.md" << 'CHECKLIST'
 # 角色行为一致性守则
 
@@ -591,11 +785,11 @@ cat > "$NOVEL_DIR/characters/04_consistency_checklist.md" << 'CHECKLIST'
 CHECKLIST
 ```
 
-### Step 3.6 — Phase 3 归档
+### Step 3.7 — Phase 3 归档
 
 ```bash
 # [GIT]
-source /tmp/sop_novel.env
+source "$PROJECT_DIR/.sop_novel.env"
 cd "$PROJECT_DIR"
 git add -A
 git commit -m "feat(phase-3): 人物设计与世界观设定完成
@@ -615,284 +809,422 @@ git commit -m "feat(phase-3): 人物设计与世界观设定完成
 
 > **[GENERATE]** + **[REVIEW]** + **[VALIDATE]** 逐章创作第一幕 → 自动审查 → 字数把控
 
-### 每章创作标准流程
+### ⚡ 每章创作标准流程 (8步循环 — 整部小说的核心引擎)
+
+**这是 SOP 最关键的机制。每一章（第1章到第31章）都必须严格按此流程执行。bash for-loop 只做文件管理和提交，AI 生成由 Claude Code 在循环体内逐章独立完成。**
 
 ```
-1. [RESEARCH] 重读该章大纲 + 相关人物小传 + 伏笔矩阵
-2. [GENERATE] 生成 2,500-3,500 字正文
-3. [REVIEW] 自动审查:
-   - 人物行为是否符合人设?
-   - 伏笔是否正确埋设?
-   - 对白占比是否 ≥ 60%?
-   - 章节尾部是否留有钩子?
-4. [VALIDATE] 对照验收清单逐项确认
-5. [SHELL] 更新进度追踪
-6. [GIT] 提交该章
+对于第 N 章 (N=1 到 31):
+
+Step A [READ] 加载上下文 (每章必做，耗时约30秒):
+  1. 读取 $NOVEL_DIR/outlines/02_chapter_outlines.md 中第N章的大纲
+  2. 读取 $NOVEL_DIR/characters/01_main_characters.md 中本章出场角色的对白风格
+  3. 读取 $NOVEL_DIR/characters/05_style_guide.md 文体风格指南 (防套路化)
+  4. 读取 $NOVEL_DIR/outlines/03_foreshadowing_matrix.md 确认埋设/回收内容
+  5. 如 N>1: 读取 $PROJECT_DIR/logs/chapter_summaries.md 的前3章剧情摘要
+  6. 如 N>1: 读取上一章全文的最后 300 字，确保钩子无缝对接
+
+Step B [RESEARCH] 三幕定位 (10秒):
+  - 确认本章在三幕结构中的叙事功能 (激励事件? 上升行动? 至暗时刻?)
+  - 确认本章的情感曲线目标 (从什么情绪 → 什么情绪)
+
+Step C [GENERATE] 创作正文 (核心，3-5分钟):
+  - 写 2,500-3,500 字的小说正文
+  - 对白占比 ≥ 60%
+  - 场景 ≤ 5个
+  - 章末必须留有钩子/悬念
+  - 控制"叙述:描写:对白"比例为 20:20:60
+
+Step D [REVIEW] 自动审查 (30秒):
+  □ 人物行为是否符合人设? (对照对白风格卡)
+  □ 伏笔是否正确埋设/回收?
+  □ 章节尾部是否有钩子?
+  □ 是否有新颖的表达，而非套路化?
+  □ 是否避免了"他说""她说"等冗余标签?
+
+Step E [WRITE] 保存章节:
+  - 写入 $NOVEL_DIR/chapters/ch{N}_{slug}.md
+
+Step F [WRITE] 更新剧情摘要 (关键!):
+  - 追加 3-5 句话摘要到 $PROJECT_DIR/logs/chapter_summaries.md
+  - 格式: "第N章: [核心事件] | 人物状态: [主角在哪/情绪] | 钩子: [章末悬念] | 伏笔埋设: [Fxx] | 伏笔回收: [Fxx]"
+
+Step G [SHELL] 字数统计:
+  - 运行 progress.sh
+
+Step H [GIT] 提交:
+  - git commit -m "feat(act-N): 第N章 - [标题]"
 ```
 
-### Step 4.1 — 第 1 章: 开场钩子
+### Step 4.1 — 第 1 章: 开场钩子 (最关键的章节)
 
-> **[GENERATE]** 第 1 章是全书最重要的章节，决定读者/观众是否继续
+> **[GENERATE]** Claude Code 执行标准8步流程。第1章有额外严格要求。
 
 ```
-第 1 章创作要点:
-□ 前 300 字必须出现「钩子」— 一个让读者必须继续读的问题/悬念/冲突
-□ 展示主角的「日常世界」和「核心欲望」的萌芽
-□ 暗示即将到来的改变（伏笔 F01）
-□ 建立至少 1 个读者可以共鸣的情感锚点
+第1章额外要求:
+□ 前 200 字必须出现钩子 (悬念/冲突/反常/情感暴击)
+□ 展示主角的「日常世界」— 但日常中有暗流
+□ 第1章就要暗示主角的核心欲望
+□ 建立至少 1 个情感锚点让读者共情
 □ 对白占比 ≥ 60%
-□ 章节末尾留悬念
+□ 朗读对白检查口语化程度
 ```
 
 ```bash
-# [SHELL] 创建第1章文件
-source /tmp/sop_novel.env
-cat > "$NOVEL_DIR/chapters/ch01_opening.md" << 'CH01'
-# 第一章: [章节标题]
-
-[Claude Code 在此生成 2,500-3,500 字正文]
-
----
-*字数: [N] 字 | 创作时间: ... | 伏笔: F01*
-CH01
-
-# [REVIEW] 审查第1章
-echo "=== 第1章审查 ==="
-
-# [GIT]
-cd "$PROJECT_DIR"
-git add -A
-git commit -m "feat(phase-4): 第1章 — 开场钩子"
+# [READ] Step A — 加载上下文
+source "$PROJECT_DIR/.sop_novel.env"
+cat "$NOVEL_DIR/outlines/02_chapter_outlines.md" | sed -n '/## 第1章/,/^## 第2章/p'
+cat "$NOVEL_DIR/characters/01_main_characters.md"
+cat "$NOVEL_DIR/outlines/03_foreshadowing_matrix.md" | head -30
 ```
 
-### Step 4.2 — 第 2-8 章: 铺垫、激励事件、第一幕高潮
-
-> **[GENERATE]** 逐章生成，每章独立审查
+```
+# [GENERATE] Step C — Claude Code 创作第1章正文 (2,500-3,500字)
+# 写入 $NOVEL_DIR/chapters/ch01_opening.md
+```
 
 ```bash
-# [SHELL] 逐章创作框架
-source /tmp/sop_novel.env
+# [WRITE] Step E+F — 保存章节 + 更新摘要
+source "$PROJECT_DIR/.sop_novel.env"
+cat >> "$PROJECT_DIR/logs/chapter_summaries.md" << 'SUM'
+第1章 [标题]: [核心事件1句] | 主角状态: [...] | 钩子: [...] | 埋设: F01 | 回收: 无
+SUM
 
-for ch in 02 03 04 05 06 07 08; do
-  echo "📝 正在创作第${ch}章..."
-  
-  # [RESEARCH] 读取大纲中该章内容
-  # [GENERATE] Claude Code 生成章节
-  # [REVIEW] Claude Code 审查
-  
-  # [SHELL] 字数统计
-  if [ -f "$NOVEL_DIR/chapters/ch${ch}_*.md" ]; then
-    WORDS=$(cat "$NOVEL_DIR/chapters/ch${ch}_"*.md | grep -oP '[\x{4e00}-\x{9fff}]' | wc -l | tr -d ' ')
-    echo "  第${ch}章: $WORDS 字"
-  fi
-  
-  # [GIT] 逐章提交
-  cd "$PROJECT_DIR"
-  git add -A
-  git commit -m "feat(phase-4): 第${ch}章"
-done
-
-# 第一幕总字数统计
+# [SHELL] Step G — 字数统计
 bash "$PROJECT_DIR/logs/progress.sh"
+
+# [GIT] Step H
+cd "$PROJECT_DIR" && git add -A && git commit -m "feat(phase-4): 第1章 - 开场钩子"
+```
+
+### Step 4.2-4.4 — 第 2-8 章: 逐章执行8步循环
+
+> **[GENERATE]** 每章独立执行完整的 Step A→H 流程。
+
+```
+第2-8章逐章要求:
+- 第 2 章: 深化情感投入 + 埋设 F02 | 冲突 ★★
+- 第 3 章: 激励事件 (前500字内发生) | 冲突 ★★★★★ | 短剧EP01卡点
+- 第 4 章: 主角犹豫，展现致命缺陷 | 冲突 ★★★
+- 第 5 章: 外部压力升级，被迫出发 | 冲突 ★★★★
+- 第 6 章: 新世界的冲击与诱惑 | 冲突 ★★★
+- 第 7 章: 第一次真正考验 | 冲突 ★★★★
+- 第 8 章: 不可逆的选择 | 冲突 ★★★★★ | 短剧EP03卡点
+```
+
+```bash
+# [SHELL] Phase 4 收尾
+source "$PROJECT_DIR/.sop_novel.env"
+bash "$PROJECT_DIR/logs/progress.sh"
+cd "$PROJECT_DIR" && git add -A && git commit -m "feat(phase-4): 第一幕完成 (第1-8章)"
 ```
 
 **每章验收清单:**
+- [ ] 执行了 Step A 上下文加载 ✓
 - [ ] 字数 2,500-3,500 ✓
-- [ ] 章节末尾有钩子 ✓
-- [ ] 伏笔按矩阵埋设 ✓
+- [ ] 章末有钩子 ✓
+- [ ] 伏笔按矩阵埋设/回收 ✓
 - [ ] 人物行为符合人设 ✓
 - [ ] 对白占比 ≥ 60% ✓
+- [ ] 已更新 chapter_summaries.md ✓
 
-> **Phase 4 验收**: 第 1-8 章完成 ✅ | 总字数 20,000-28,000 字 ✅ | 激励事件明确 ✅ | 第一幕高潮有力 ✅
+> **Phase 4 验收**: 第 1-8 章完成 ✅ | 总字数 20,000-28,000 字 ✅ | 激励事件有冲击力 ✅ | 第一幕高潮不可逆 ✅
 
 ---
 
-## Phase 5: 第二幕创作 — 对抗篇 (第 9-22 章)
+## Phase 5: 第二幕创作 — 对抗篇 (第 9-24 章)
 
-> **[GENERATE]** + **[REVIEW]** + **[VALIDATE]** 逐章创作第二幕，这是小说的主体
+> **[GENERATE]** + **[REVIEW]** + **[VALIDATE]** 逐章执行 Phase 4 定义的8步标准循环。第二幕是小说主体，占全书50%篇幅。
 
 ### Step 5.1 — 第 9-14 章: 上升行动 & 第一次挫败
 
+> **[GENERATE]** 逐章执行 Step A→H。每3章做一次阶段性审查。
+
+```
+第9-14章逐章要求:
+- 第 9 章: 正面迎战第一个实质性障碍 | 冲突 ★★★★
+- 第10章: 人际关系网络展开 (盟友+敌人) | 冲突 ★★★
+- 第11章: 阶段性小胜 (但不能是全面胜利) | 冲突 ★★★
+- 第12章: 暗流涌动 — 敌人的反击在酝酿 | 冲突 ★★★★
+- 第13章: 第一次重大挫败 | 冲突 ★★★★★
+- 第14章: 局势恶化，至暗时刻前奏 | 冲突 ★★★★
+```
+
 ```bash
-# [SHELL] 逐章创作
-source /tmp/sop_novel.env
-
-for ch in 09 10 11 12 13 14; do
-  echo "📝 正在创作第${ch}章..."
-  # [RESEARCH] → [GENERATE] → [REVIEW] → [VALIDATE] → [GIT]
-  
-  cd "$PROJECT_DIR"
-  git add -A
-  git commit -m "feat(phase-5): 第${ch}章"
-done
-
+# [SHELL] 第9-14章阶段性审查
+source "$PROJECT_DIR/.sop_novel.env"
 echo "=== 阶段性审查: 第 9-14 章 ==="
-echo "审查要点:"
-echo "  1. 剧情推进速度是否合理"
-echo "  2. 是否有连续 2 章以上无冲突升级"
-echo "  3. 反派/对立面的塑造是否充足"
-echo "  4. 第一次挫败是否足够有力"
+cat << 'REVIEW_9_14'
+审查要点:
+  1. 剧情推进速度是否合理? (不能太快也不能拖)
+  2. 是否有连续 2 章以上无冲突升级?
+  3. 反派/对立面是否被充分塑造? (不能是纸片人)
+  4. 第13章的挫败是否真正让人感到"输了"?
+  5. 章间钩子是否有效串联?
+REVIEW_9_14
 ```
 
 ### Step 5.2 — 第 15-18 章: 中间转折 & 反击
 
+> **[GENERATE]** 中间转折是全篇第二重要的节点 (仅次于高潮)
+
+```
+第15-18章逐章要求:
+- 第15章: 中间转折 — 必须让故事走向发生质变 | 冲突 ★★★★★
+- 第16章: 消化转折，重新振作 | 冲突 ★★★
+- 第17章: 反击开始，主角从被动变主动 | 冲突 ★★★★
+- 第18章: 高潮铺垫 — 矛盾和张力持续积累 | 冲突 ★★★★
+```
+
 ```bash
-# [REVIEW] 中间转折审查要点:
+# [REVIEW] 中间转折专项审查
 cat << 'REVIEW15'
-🔍 中间转折审查 (第15章前后)
-  1. 转折是否有前期铺垫? → 检查伏笔矩阵
-  2. 转折是否改变故事走向? → 回顾三幕结构
-  3. 转折是否加深人物关系? → 检查关系演变时间线
-  4. 转折是否有情感冲击力? → 评估情感曲线
+🔍 第15章中间转折审查 (五项必查):
+  1. 转折是否有前期铺垫? → 检查伏笔矩阵是否有 ≥2 个伏笔指向此处
+  2. 转折是否改变了故事的根本走向? → 转折前后，主角的目标/方法应明显不同
+  3. 转折是否加深了人物关系? → 至少 1 组关系在转折后发生质变
+  4. 转折是否有情感冲击力? → 读者在此处应该产生强烈的情绪反应
+  5. 转折是否合逻辑? → 不能为了转折而转折，必须有因果链
 REVIEW15
 ```
 
-### Step 5.3 — 第 19-22 章: 至暗时刻 & 顿悟
+### Step 5.3 — 第 19-24 章: 至暗时刻 & 顿悟
+
+> **[GENERATE]** 这是第二幕的收尾，也是第三幕高潮的铺垫
+
+```
+第19-24章逐章要求:
+- 第19章: 假高潮 — 看似胜利实则陷阱 | 冲突 ★★★★★
+- 第20章: 至暗时刻 — 主角失去一切 | 冲突 ★★★★★
+- 第21章: 顿悟 — 发现核心真相 | 冲突 ★★★★
+- 第22章: 整合资源，最终准备 | 冲突 ★★★
+- 第23章: B故事线收束 (次要人物结局) | 冲突 ★★★
+- 第24章: 最终对决开始 | 冲突 ★★★★★
+```
 
 ```bash
-# [REVIEW] 至暗时刻审查要点:
+# [REVIEW] 至暗时刻专项审查
 cat << 'REVIEW20'
-🔍 至暗时刻审查 (第20章前后)
-  1. 这真的是最低谷吗? → 列出主角失去的一切
-  2. 读者是否会产生强烈共情? → 评估情感投入度
-  3. 反转是否有足够的铺垫? → 检查反转节点地图
-  4. 第22章的动力是否合理? → 检查顿悟的逻辑
-  5. 至暗时刻之后必然要有曙光 → 第21-22章的转折
+🔍 第20章至暗时刻审查 (五项必查):
+  1. 这真的是最低谷吗? → 列出主角在此刻失去的一切 (至少3样)
+  2. 读者是否会由衷心疼主角? → 情感投入度评估
+  3. 至暗时刻的成因是否与主角的致命缺陷直接相关? (必须相关!)
+  4. 第21章的顿悟是否源于第20章的痛苦? (必须有因果)
+  5. 从至暗到顿悟的转折是否可信? (不能是天降救兵或巧合)
 REVIEW20
 ```
 
-> **Phase 5 验收**: 第 9-22 章完成 ✅ | 总字数 55,000-65,000 字 ✅ | 伏笔 ≥ 5 个已埋设 ✅ | 反转让读者意外但合理 ✅
+```bash
+# [SHELL] Phase 5 收尾
+source "$PROJECT_DIR/.sop_novel.env"
+bash "$PROJECT_DIR/logs/progress.sh"
+cd "$PROJECT_DIR" && git add -A && git commit -m "feat(phase-5): 第二幕完成 (第9-24章)"
+```
+
+> **Phase 5 验收**: 第 9-24 章完成 ✅ | 总字数 60,000-75,000 ✅ | 伏笔 ≥ 8 个已埋设 ✅ | 中间转折+至暗时刻有冲击力 ✅
 
 ---
 
-## Phase 6: 第三幕创作 — 结局篇 (第 23-30 章)
+## Phase 6: 第三幕创作 — 结局篇 (第 25-31 章)
 
-> **[GENERATE]** + **[REVIEW]** + **[VALIDATE]** 创作高潮与结局
+> **[GENERATE]** + **[REVIEW]** + **[VALIDATE]** 逐章执行8步标准循环 (同 Phase 4-5)。创作高潮与结局。
 
-### Step 6.1 — 第 23-26 章: 最终对决 & 高潮
+### Step 6.1 — 第 25-27 章: 最终对决 & 高潮
 
-```bash
-# [REVIEW] 高潮审查要点:
-cat << 'REVIEW23'
-🔍 最终高潮审查
-  1. 是否所有主要伏笔都在此汇合?
-  2. 高潮场景是否有足够的视觉冲击力? (短剧关键)
-  3. 主角是否主动做出关键决定? (不能是巧合)
-  4. 情绪曲线是否达到了全篇最高点?
-  5. 第25章高潮之后，第26章需要让读者喘口气
-REVIEW23
+> **[GENERATE]** 高潮是全篇最重要的节点。读者/观众投入了几万字走到这里，必须给予满足。
+
+```
+第25-27章要求:
+- 第25章: 拉锯战 — 来回多次反转，不能一边倒 | 冲突 ★★★★★
+- 第26章: 高潮 — 所有伏笔在此汇合，主角做出决定性一击 | 冲突 ★★★★★
+- 第27章: 尘埃落定 — 揭示后果，给读者喘息空间 | 冲突 ★★★★
 ```
 
-### Step 6.2 — 第 27-30 章: 结局与尾声
+```bash
+# [REVIEW] 高潮专项审查
+cat << 'REVIEW25'
+🔍 第25-26章高潮审查 (五项必查):
+  1. 是否所有主要伏笔都在此汇合? (逐条对照伏笔矩阵)
+  2. 高潮场景是否有足够的视觉冲击力? (短剧最关键的1集!)
+  3. 主角是否主动做出关键决定? (不能是被动接受或巧合)
+  4. 情绪曲线是否达到全篇最高点?
+  5. 高潮中是否包含至少 1 个意外但合理的反转?
+REVIEW25
+```
+
+### Step 6.2 — 第 28-31 章: 结局与尾声
+
+> **[GENERATE]** 结局要给读者情感满足，同时有余韵。
+
+```
+第28-31章要求:
+- 第28章: 新平衡 — 世界恢复/重建 | 冲突 ★★★
+- 第29章: 回报 — 主角获得成长/奖励 | 冲突 ★★
+- 第30章: 告别 — 重要人物关系收束 | 冲突 ★★★
+- 第31章: 尾声 — 主题升华/余韵/第二季钩子(可选) | 冲突 ★
+```
 
 ```bash
-# [REVIEW] 结局审查要点:
-cat << 'REVIEW27'
-🔍 结局审查
-  1. 所有人物弧光是否闭合?
-  2. 主题是否有明确的表达?
-  3. 结尾是否有余韵? (不是戛然而止)
-  4. 是否给读者情感满足?
-  5. 是否暗示了未来的可能性? (番外/第二季的钩子)
-REVIEW27
+# [REVIEW] 结局专项审查
+cat << 'REVIEW28'
+🔍 结局审查 (五项必查):
+  1. 所有人物弧光是否闭合? (每个主要角色的成长线是否完成)
+  2. 主题是否有明确的表达? (读者看完后知道"这个小说讲了什么")
+  3. 结尾是否有余韵? (不是戛然而止，不是烂尾)
+  4. 是否给了读者情感满足? (甜→幸福 / 虐→释然 / 悬疑→恍然大悟)
+  5. 是否暗示了未来的可能性? (番外/第二季的钩子 — 可选但加分)
+REVIEW28
 ```
 
 ### Step 6.3 — 全篇字数终审
 
 ```bash
 # [SHELL] 全篇字数终审
-source /tmp/sop_novel.env
+source "$PROJECT_DIR/.sop_novel.env"
 bash "$PROJECT_DIR/logs/progress.sh"
 
-TOTAL=$(cat "$NOVEL_DIR/chapters"/*.md 2>/dev/null | grep -oP '[\x{4e00}-\x{9fff}]' | wc -l | tr -d ' ')
+# macOS 兼容的中文字数统计 (使用 perl 代替 grep -P)
+TOTAL=$(cat "$NOVEL_DIR/chapters"/*.md 2>/dev/null | perl -CS -ne 'while(/([\x{4e00}-\x{9fff}\x{3400}-\x{4dbf}])/g){$c++} END{print $c}')
 if [ "$TOTAL" -lt 90000 ]; then
-  echo "⚠️ 字数不足 9万字，当前 $TOTAL 字，需补写 $((100000 - TOTAL)) 字"
-  echo "   建议: 为重点章节的场景描写和内心独白各增加300-500字"
+  echo "⚠️ 字数不足 9万字，当前 $TOTAL 字"
+  echo "   需补写 $((100000 - TOTAL)) 字"
+  echo "   → 回到第二幕，为重点场景增加描写和支线"
 elif [ "$TOTAL" -gt 110000 ]; then
-  echo "⚠️ 字数超出 11万字，当前 $TOTAL 字，建议 Phase 7 精简"
+  echo "⚠️ 字数超出，当前 $TOTAL 字"
+  echo "   → Phase 7 精简非核心场景"
 else
-  echo "✅ 字数在目标范围内: $TOTAL / 100000"
+  echo "✅ 字数达标: $TOTAL / 100000"
 fi
+
+# [GIT]
+cd "$PROJECT_DIR" && git add -A && git commit -m "feat(phase-6): 第三幕完成 — 全篇初稿就绪"
 ```
 
-> **Phase 6 验收**: 第 23-30 章完成 ✅ | 全篇 95,000-105,000 字 ✅ | 所有伏笔已回收 ✅ | 人物弧光完整 ✅
+> **Phase 6 验收**: 第 25-31 章完成 ✅ | 全篇 95,000-105,000 字 ✅ | 所有伏笔已回收 ✅ | 人物弧光完整 ✅
 
 ---
 
 ## Phase 7: 全局编辑 & 润色
 
-> **[READ]** + **[REVIEW]** + **[WRITE]** 全局通读 → 一致性审查 → 精修润色
+> **[READ]** + **[REVIEW]** + **[WRITE]** 分块审查 (非全文一次读取) → 一致性审查 → 精修润色
 
-### Step 7.1 — 全局通读
+### ⚠️ 关键约束
+
+**10万字的小说，Claude Code 无法一次性读取全文。Phase 7 采用「分块+摘要」策略:**
+
+- 每次读取 3 章 (约 10,000 字) + `chapter_summaries.md` (全书摘要)
+- 通过摘要保证全局视野，通过逐章读取做精细审查
+- 最后做跨块的一致性交叉验证
+
+### Step 7.1 — 分块通读 & 初修 (5轮，每轮3章)
+
+> **[READ]** 每轮读取 3 章正文 + 全书剧情摘要 → **[REVIEW]** 审查 → **[WRITE]** 修正
 
 ```bash
-# [SHELL] 合并全部章节为单一文件以便连贯阅读
-source /tmp/sop_novel.env
-cat "$NOVEL_DIR/chapters"/*.md > "$NOVEL_DIR/full_novel_draft.md"
-echo "✅ 全篇草稿已合并: $(wc -m < "$NOVEL_DIR/full_novel_draft.md" | tr -d ' ') 字符"
+source "$PROJECT_DIR/.sop_novel.env"
+
+# 第1轮: 第1-6章
+echo "📖 分块审查 1/5: 第 1-6 章"
+cat "$PROJECT_DIR/logs/chapter_summaries.md" | head -20
+for ch in 01 02 03 04 05 06; do
+  cat "$NOVEL_DIR/chapters/ch${ch}"_*.md
+  # [REVIEW] Claude Code 审查该章:
+  #   - 错别字/语病
+  #   - 人物行为一致性
+  #   - 章节间钩子对接
+done
+# [WRITE] Claude Code 修正发现的问题
+
+# 第2轮: 第7-12章
+# ...同上模式
+
+# 第3轮: 第13-18章
+# ...
+
+# 第4轮: 第19-24章
+# ...
+
+# 第5轮: 第25-31章
+# ...
 ```
 
 ### Step 7.2 — 一致性审查清单
 
-> **[REVIEW]** Claude Code 逐项审查
+> **[REVIEW]** Claude Code 基于 `chapter_summaries.md` 做全局一致性审查 (无需读取全文)
 
 ```
-# [REVIEW] 一致性审查
+# [REVIEW] 全局一致性审查 (基于摘要)
 
-## 人物一致性
-□ 每个角色的口头禅/语言风格是否统一?
-□ 角色关系演变是否按照关系时间线进行?
-□ 次要角色是否有 "工具人" 感? (出现只为推进剧情)
-□ 人物动机是否前后一致?
-□ 同一角色不同章节的说话方式是否一致?
+## 人物一致性 (对照 chapter_summaries.md 中"人物状态"字段)
+□ 每个角色的"人物状态"演变是否连贯? (从第1章到第31章)
+□ 同一角色在相邻章节的说话方式是否一致?
+□ 次要角色是否有"工具人"感? (查: 他们是否有独立于主角的行动?)
+□ 人物动机是否前后一致? (查: 每章的行动是否能追溯到人物小传的核心欲望?)
 
 ## 情节一致性
-□ 时间线是否无矛盾?
-□ 伏笔矩阵: 所有伏笔是否已回收?
-□ 反转节点: 前期铺垫是否充足?
-□ 是否有逻辑漏洞? (角色本可以做X却选择做Y)
-□ 关键道具/设定是否前后统一?
+□ 时间线是否无矛盾? (查: 各章摘要中的时间标记)
+□ 伏笔矩阵: 所有 F01-Fxx 是否都有对应的回收章节?
+□ 反转节点: 前期铺垫是否 ≥ 2条?
+□ 是否有逻辑漏洞? (角色可以做X却选择做Y?)
 
-## 节奏审查
-□ 每章是否有至少 1 个冲突点?
-□ 是否有连续 3 章以上无情感波动?
-□ 25,000字节点: 激励事件是否已发生?
-□ 50,000字节点: 中间转折是否已发生?
-□ 75,000字节点: 至暗时刻是否已发生?
-□ 90,000字节点: 高潮是否已到达?
+## 节奏审查 (基于摘要中的冲突等级)
+□ 冲突等级走势是否合理? ★ → ★★ → ★★★★★ → ... → ★★★★★ → ★
+□ 是否有连续3章冲突等级为★★或以下? (拖沓信号)
+□ ★★★★★ 的章节是否均匀分布? (不能集中于某一段)
+□ 结尾3章冲突是否自然回落而非骤降?
 
 ## 短剧适配检查
-□ 每章对白占比是否 ≥ 60%?
-□ 是否有过多内心独白? (短剧无法呈现，需转为对白或动作)
-□ 场景切换是否过于频繁? (>5个/章需简化)
-□ 是否有强视觉记忆点? (每3章至少1个)
-□ 环境描写是否足够具象? (便于AI生成画面)
+□ 每章是否有 ≥1 个可视觉化的强画面? (查摘要中的"核心事件")
+□ 是否有过多内心独白? (查原文: 非引号内容超过40%的章节需标注)
+□ 场景集中在主要场景吗? (查摘要: 每章场景数是否 ≤5)
 ```
 
-### Step 7.3 — 文笔润色
+### Step 7.3 — 文体一致性审查 (新增)
+
+> **[REVIEW]** 这是保证小说质量不 AI 化的关键步骤
 
 ```
-润色要点:
-1. 删除冗余形容词和副词 — 每句话问 "这个词删掉意思变了吗?"
+# [REVIEW] 文体一致性审查 (分块抽样)
+
+从第1-10章、第11-20章、第21-31章各随机抽取1章，检查:
+
+## AI 套路化排查
+□ 是否过度使用"眼中闪过一丝..."、"嘴角微微上扬"等 AI 高频句式?
+□ 是否每章的对白都以"XX说"开头? (多样性检查)
+□ 是否有连续3段以上使用相同句式结构?
+□ 情感场景的表达方式是否在10章后开始雷同?
+
+## 文体弹性检查
+□ 场景类型是否多样? (对话戏/动作戏/独白戏/蒙太奇/闪回至少各出现2次)
+□ 叙事距离是否有变化? (全知视角 vs 限知视角的切换)
+□ 时间处理是否有变化? (线性/倒叙/插叙的运用)
+□ 节奏是否有快慢变化? (不全是匀速推进)
+
+## 修复方案
+- 如果发现套路化: 重写该段落，使用不常见的表达
+- 如果章节雷同: 交换场景顺序，改变叙事视角
+- 如果节奏单一: 为拖沓章删减20%，为过快的章增加细节描写
+```
+
+### Step 7.4 — 文笔润色要点
+
+```
+润色要点 (逐章应用):
+1. 删除冗余形容词和副词 — 每句话问"这个词删掉意思变了吗?"
 2. 确保「展示，而非告知」(Show, don't tell)
+   - ❌ "她很生气" → ✅ "她把咖啡杯重重砸在桌上，杯中的液体溅到了文件上"
 3. 对白节奏优化: 短句交锋 → 长句抒情 → 短句爆发
-4. 场景转换添加过渡 — 不能跳跃
+4. 场景转换添加过渡 — 不能空间跳跃
 5. 每章开头重新抓住注意力 — 不能用平淡叙述开头
-6. 对白中去除 "他说"、"她说" — 用动作和表情代替
-7. 删除重复信息的段落
+6. 对白中去除 "他说"、"她回答" — 用动作和表情代替
+7. 删除重复信息的段落 — 如果前文已交代，后文只需暗示
 ```
 
-```bash
-# [SHELL] 润色后字数统计
-source /tmp/sop_novel.env
-bash "$PROJECT_DIR/logs/progress.sh"
-```
-
-### Step 7.4 — 终稿定稿
+### Step 7.5 — 终稿定稿
 
 ```bash
 # [SHELL] 生成终稿
-source /tmp/sop_novel.env
+source "$PROJECT_DIR/.sop_novel.env"
 cat "$NOVEL_DIR/chapters"/*.md > "$OUTPUT_DIR/novel_final.md"
 
 # 生成带目录的终稿
@@ -900,30 +1232,28 @@ echo "# 《小说标题》" > "$OUTPUT_DIR/novel_final_with_toc.md"
 echo "" >> "$OUTPUT_DIR/novel_final_with_toc.md"
 echo "## 目录" >> "$OUTPUT_DIR/novel_final_with_toc.md"
 echo "" >> "$OUTPUT_DIR/novel_final_with_toc.md"
-
 for f in "$NOVEL_DIR/chapters"/*.md; do
   TITLE=$(head -1 "$f" | sed 's/^# //')
   echo "- $TITLE" >> "$OUTPUT_DIR/novel_final_with_toc.md"
 done
-
 echo "" >> "$OUTPUT_DIR/novel_final_with_toc.md"
 echo "---" >> "$OUTPUT_DIR/novel_final_with_toc.md"
 echo "" >> "$OUTPUT_DIR/novel_final_with_toc.md"
 cat "$OUTPUT_DIR/novel_final.md" >> "$OUTPUT_DIR/novel_final_with_toc.md"
-
-echo "✅ 终稿已生成: $OUTPUT_DIR/novel_final_with_toc.md"
+echo "✅ 终稿: $OUTPUT_DIR/novel_final_with_toc.md"
 
 # [GIT]
 cd "$PROJECT_DIR"
 git add -A
 git commit -m "feat(phase-7): 全局编辑润色 & 终稿定稿
 
-- 一致性审查通过
-- 文笔润色完成
-- 终稿含目录版已输出"
+- 分块审查: 5轮 × 3章
+- 一致性审查: 基于 chapter_summaries.md
+- 文体一致性: AI套路化排查
+- 文笔润色: 逐章精修"
 ```
 
-> **Phase 7 验收**: 一致性审查通过 ✅ | 伏笔全部回收 ✅ | 节奏合理 ✅ | 终稿 95,000-105,000 字 ✅ | 用户签字确认 ✅
+> **Phase 7 验收**: 一致性审查通过 ✅ | 伏笔全部回收 ✅ | 节奏合理 ✅ | 文体不套路 ✅ | 终稿 95,000-105,000 字 ✅
 
 ---
 
@@ -931,11 +1261,52 @@ git commit -m "feat(phase-7): 全局编辑润色 & 终稿定稿
 
 > **[GENERATE]** + **[WRITE]** 将小说转换为短剧分集剧本 → 适配小云雀 2.0 格式
 
+### Step 8.0 — 小说→短剧改编方法论 (关键!)
+
+> **[RESEARCH]** + **[GENERATE]** 在分集之前，Claude Code 必须先理解改编原则。
+
+```
+# 小说 → 短剧 改编核心原则
+
+## 1. 叙事载体转换
+小说是"读"的 → 短剧是"看+听"的:
+- 心理描写 → 转为对白或动作 (短剧观众看不到角色的内心)
+- 叙述性总结 → 转为具体场景 (短剧只能呈现"此刻发生的事")
+- 抽象感受 → 转为视觉化表达 (短剧需要画面)
+
+示例:
+  小说: "这三年来，她每天都在后悔那个决定。"
+  短剧: [场景: 女主对着镜子] 女主: "1095天。每天醒来第一件事，就是后悔那天为什么没有回头。"
+
+## 2. 对白精炼原则
+- 小说对白可以 20-30 字/句 → 短剧对白 ≤ 15 字/句
+- 删除所有"嗯"、"啊"等填充词 (AI配音会处理语气)
+- 每句对白必须有推动剧情或揭示人物的作用 (不能是寒暄)
+- 对白 = 小说对白中最有冲击力的那句话 + 补充的视觉信息
+
+## 3. 场景合并原则
+- 小说中 5 个场景 → 短剧合并为 2-3 个
+- 合并标准: 功能相同的场景合并 (三场"主角在家难过"→ 一场)
+- 保留标准: 视觉差异大的场景保留 (办公室 vs 海边 vs 医院)
+- 每集场景 ≤ 4 个 (小云雀 AI 适配)
+
+## 4. 情感浓度升级
+- 短剧每集 1-3 分钟，情感必须比小说更集中
+- 小说可以用 500 字铺垫情绪 → 短剧必须在 5 秒内建立情绪
+- 每一集必须有 1 个明确的情绪标签: [甜] [虐] [爽] [疑] [燃] [治愈]
+
+## 5. 卡点设计原则
+短剧的生命线是"让观众点下一集":
+- 每集最后 5 秒必须是: 悬念(50%) 或 情感暴击(30%) 或 信息炸弹(20%)
+- 绝不能: 平淡收尾、自然过渡、"欲知后事如何"式结束
+- 3集一卡: 第3集、第6集、第9集...的卡点要特别强
+```
+
 ### Step 8.1 — 分集策略
 
 ```bash
 # [WRITE] 创建分集策略文档
-source /tmp/sop_novel.env
+source "$PROJECT_DIR/.sop_novel.env"
 cat > "$SCRIPTS_DIR/00_episode_plan.md" << 'PLAN'
 # 分集策略
 
@@ -969,7 +1340,7 @@ PLAN
 
 ```bash
 # [WRITE] 剧本模板
-source /tmp/sop_novel.env
+source "$PROJECT_DIR/.sop_novel.env"
 cat > "$SCRIPTS_DIR/episode_template.md" << 'TEMPLATE'
 # 第 N 集剧本模板
 
@@ -1013,7 +1384,7 @@ TEMPLATE
 
 ```bash
 # [SHELL] 逐集生成剧本
-source /tmp/sop_novel.env
+source "$PROJECT_DIR/.sop_novel.env"
 EPISODE_COUNT=20  # 根据分集策略调整
 
 for ep in $(seq -w 1 $EPISODE_COUNT); do
@@ -1039,7 +1410,7 @@ echo "✅ 全部 $EPISODE_COUNT 集剧本生成完毕"
 
 ```bash
 # [SHELL] 生成小云雀导入文件
-source /tmp/sop_novel.env
+source "$PROJECT_DIR/.sop_novel.env"
 mkdir -p "$OUTPUT_DIR/xiaoyunque"
 
 # 格式1: 逐集独立文件 (推荐，便于单集修改和重新生成)
@@ -1079,23 +1450,25 @@ git commit -m "feat(phase-8): 短剧分集剧本 & 小云雀2.0导入文件完�
 
 > **[DIALOG]** + **[SHELL]** 用户操作 + Claude Code 指导 → 导入脚本 → AI 生成视频 → 审核迭代
 
+> ⚠️ **重要声明**: 以下操作流程基于对小云雀 2.0 的通用理解编写。实际界面、功能名称、操作步骤可能因小云雀平台版本更新而有差异。执行时以小云雀实际界面为准，本 SOP 提供的是操作框架和原则。
+
 ### Step 9.1 — 小云雀 2.0 项目创建
 
 > **[DIALOG]** Claude Code 指导用户在浏览器中操作
 
 ```
-📋 操作指引 — 小云雀 2.0 项目创建:
+📋 操作指引 — 小云雀 2.0 项目创建 (通用框架):
 
-1. 访问小云雀 2.0 平台 (https://xiaoyunque.ai 或对应地址)
+1. 访问小云雀 2.0 平台
 2. 登录账号
-3. 点击「创建新项目」
+3. 创建新项目
 4. 项目名称: [小说标题 - 短剧]
-5. 配置参数:
-   - 视频风格: [根据题材选择: 现代都市/古装/动漫/写实...]
-   - 画幅比例: 9:16 (竖屏，适配抖音/快手/视频号)
+5. 核心配置:
+   - 视频风格: [根据题材选择 AI 模型支持的最匹配风格]
+   - 画幅比例: 9:16 (竖屏，适配短视频平台)
    - 分辨率: 1080×1920
    - 语言: 中文
-6. 点击「创建」
+6. 如果平台支持: 开启"角色一致性"/"角色锁定"功能 (确保 AI 生成的角色在多集中外观一致)
 
 # [DIALOG] 等待用户确认 "项目已创建"
 ```
@@ -1184,11 +1557,61 @@ git commit -m "feat(phase-8): 短剧分集剧本 & 小云雀2.0导入文件完�
 #   d. 手动使用剪辑工具对画面进行微调
 ```
 
-### Step 9.5 — 全集导出 & 管理
+### Step 9.5 — 后期制作 (封面/字幕/片头片尾)
+
+> **[WRITE]** + **[DIALOG]** 短剧发布前的必要后期工作
+
+```
+# 封面制作规范
+
+## 统一封面模板
+- 尺寸: 1080×1920 (与视频相同)
+- 模板布局: 上方70%为关键帧/人物图，下方30%为文字区
+- 文字区: 剧集标题 (大号) + 集号 (小号) + "第N集" 标识
+- 建议工具: Canva / 醒图 / 美图秀秀 (模板功能)
+
+## 每集封面差异化
+- 使用该集最具冲击力的 AI 生成画面作为封面主图
+- 文字保持统一风格和位置
+- 建议: 生成20集封面后，用手机浏览检查统一性
+
+# 字幕制作规范
+
+## 字幕样式
+- 字体: 清晰易读 (推荐: 思源黑体/阿里巴巴普惠体)
+- 大小: 适合手机竖屏观看 (约占屏幕宽度80%)
+- 位置: 屏幕下方1/6处
+- 颜色: 白色字 + 黑色描边/阴影 (保证在任何背景上可读)
+- 每行字数: ≤18字/行 (手机观看最佳)
+- 显示时长: 与对应语音同步
+
+## 字幕工具
+- 如果小云雀 2.0 自带字幕: 检查准确率后直接使用
+- 如果需要外部添加: 剪映 (自动语音识别+字幕) → 手动校对 → 导出
+
+# 片头制作 (15-20秒)
+- 剧名展示 + 核心冲突1句话 + 风格基调音乐
+- 前3秒必须出现最吸引人的画面 (防止用户划走)
+- 建议: 从全剧最精彩的画面中挑选3-5帧制作蒙太奇
+
+# 片尾制作 (10秒)
+- 引流信息: "关注我，看更多短剧" / 账号名
+- 下集预告: 1个画面 + 1句钩子对白
+- 全集引导: "点击合集看全集"
+
+# 背景音乐 (BGM)
+- 如果小云雀不支持自动BGM: 
+  1. 从无版权音乐库下载 (推荐: YouTube Audio Library、Pixabay Music)
+  2. 使用剪映内置音乐库
+  3. 每集选择情绪匹配的BGM
+  4. 音量设为视频原声的30-40% (不能喧宾夺主)
+```
+
+### Step 9.6 — 全集导出 & 管理
 
 ```bash
 # [SHELL] 在本地建立视频管理目录
-source /tmp/sop_novel.env
+source "$PROJECT_DIR/.sop_novel.env"
 mkdir -p "$OUTPUT_DIR/videos/raw"        # 原始 AI 生成视频
 mkdir -p "$OUTPUT_DIR/videos/final"      # 最终成品
 mkdir -p "$OUTPUT_DIR/videos/thumbnails" # 封面图
@@ -1233,7 +1656,7 @@ git commit -m "feat(phase-9): 小云雀2.0视频制作流程完成
 
 ```bash
 # [SHELL] 生成最终交付包
-source /tmp/sop_novel.env
+source "$PROJECT_DIR/.sop_novel.env"
 
 # 创建交付目录
 DELIVERY_DIR="$OUTPUT_DIR/delivery_$(date +%Y%m%d)"
@@ -1284,7 +1707,7 @@ echo "✅ 最终交付包已准备: $DELIVERY_DIR"
 
 ```bash
 # [WRITE] 创建发布指南
-source /tmp/sop_novel.env
+source "$PROJECT_DIR/.sop_novel.env"
 cat > "$OUTPUT_DIR/publishing_guide.md" << 'PUBLISH'
 # 短剧发布平台指南
 
@@ -1339,7 +1762,7 @@ PUBLISH
 
 ```bash
 # [SHELL] 生成创作报告
-source /tmp/sop_novel.env
+source "$PROJECT_DIR/.sop_novel.env"
 
 cat > "$OUTPUT_DIR/creation_report.md" << 'REPORT'
 # 创作数据报告
@@ -1382,7 +1805,7 @@ echo "✅ 创作报告已生成: $OUTPUT_DIR/creation_report.md"
 
 ```bash
 # [GIT] 最终提交 & 打标签
-source /tmp/sop_novel.env
+source "$PROJECT_DIR/.sop_novel.env"
 cd "$PROJECT_DIR"
 git add -A
 git commit -m "feat(phase-10): 最终发布准备 & 全流程归档
@@ -1431,25 +1854,25 @@ echo "   7. 建立粉丝社群 (微信群/QQ群)"
 
 ```bash
 # 进度查询
-source /tmp/sop_novel.env && bash "$PROJECT_DIR/logs/progress.sh"
+source "$PROJECT_DIR/.sop_novel.env" && bash "$PROJECT_DIR/logs/progress.sh"
 
 # 查看某章内容
-source /tmp/sop_novel.env && cat "$NOVEL_DIR/chapters/ch01_opening.md"
+source "$PROJECT_DIR/.sop_novel.env" && cat "$NOVEL_DIR/chapters/ch01_opening.md"
 
 # 查看大纲
-source /tmp/sop_novel.env && cat "$NOVEL_DIR/outlines/01_three_act_structure.md"
+source "$PROJECT_DIR/.sop_novel.env" && cat "$NOVEL_DIR/outlines/01_three_act_structure.md"
 
 # 查看人物
-source /tmp/sop_novel.env && cat "$NOVEL_DIR/characters/01_main_characters.md"
+source "$PROJECT_DIR/.sop_novel.env" && cat "$NOVEL_DIR/characters/01_main_characters.md"
 
 # 统计总字数
-source /tmp/sop_novel.env && cat "$NOVEL_DIR/chapters"/*.md | grep -oP '[\x{4e00}-\x{9fff}]' | wc -l
+source "$PROJECT_DIR/.sop_novel.env" && cat "$NOVEL_DIR/chapters"/*.md | perl -CS -ne 'while(/([\x{4e00}-\x{9fff}])/g){$c++} END{print "$c\n"}'
 
 # 查看 Git 历史
-source /tmp/sop_novel.env && cd "$PROJECT_DIR" && git log --oneline -20
+source "$PROJECT_DIR/.sop_novel.env" && cd "$PROJECT_DIR" && git log --oneline -20
 
 # 合并全篇
-source /tmp/sop_novel.env && cat "$NOVEL_DIR/chapters"/*.md > /tmp/full_novel.md
+source "$PROJECT_DIR/.sop_novel.env" && cat "$NOVEL_DIR/chapters"/*.md > "$OUTPUT_DIR/full_novel.md"
 ```
 
 ### B. 常见问题速查
