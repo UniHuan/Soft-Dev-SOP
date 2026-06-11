@@ -9,6 +9,63 @@
 
 ---
 
+## 🚀 如何使用本 SOP
+
+**用户操作 (仅需一句话)**:
+```
+在 Claude Code 对话中说:
+"按照 creative/Novel_to_Short_Drama_SOP.md 开始创作小说"
+
+或者如果已开始但中断:
+"按照 SOP 继续创作，上次完成到 Phase X"
+```
+
+**Claude Code 的行为**:
+1. 读取本 SOP 文件
+2. 从 Phase 0 开始按顺序执行（如中断则从上次 Phase 继续）
+3. 遇到 [DIALOG] 标记时暂停，等待用户确认
+4. 每个 Phase 完成后自动 Git 提交
+
+**会话恢复机制** (跨多个 Claude Code 会话):
+```
+由于创作周期 5-7 天，必然跨越多个对话会话。
+每次新会话开始时的标准操作:
+
+1. [READ] 读取 $PROJECT_DIR/logs/chapter_summaries.md 了解全篇进度
+2. [SHELL] 运行 bash $PROJECT_DIR/logs/progress.sh 获取字数进度
+3. [READ] 读取上一个 Phase 的最后3章内容确认上下文
+4. 确定当前应从哪个 Phase/Step 继续
+5. 继续执行 SOP 的8步循环
+
+Claude Code 通过 Git 提交记录和 chapter_summaries.md 判断进度。
+
+### ⚠️ 上下文窗口管理 (关键!)
+
+10万字的小说创作会产生巨大的对话历史。为避免上下文窗口饱和:
+
+**推荐会话边界 (在这些节点开启新会话):**
+- Phase 1 完成后 (大纲确定) → 新会话开始 Phase 2
+- Phase 3 完成后 (人物设定完成) → 新会话开始 Phase 4-6
+- Phase 4 完成后 (第1-8章) → 新会话开始 Phase 5
+- Phase 5 完成后 (第9-24章) → 新会话开始 Phase 6
+- Phase 7 完成后 (终稿定稿) → 新会话开始 Phase 8
+- Phase 8 完成后 (剧本完成) → 新会话开始 Phase 9
+
+**每次新会话的标准恢复流程:**
+```
+# 在新会话中，Claude Code 执行:
+1. [READ] creative/Novel_to_Short_Drama_SOP.md (重读SOP)
+2. [READ] $PROJECT_DIR/logs/chapter_summaries.md (了解全篇剧情)
+3. [SHELL] bash $PROJECT_DIR/logs/progress.sh (获取进度)
+4. [READ] $NOVEL_DIR/outlines/01_three_act_structure.md (回顾结构)
+5. [READ] $NOVEL_DIR/characters/05_style_guide.md (重读风格指南)
+6. 从当前 Phase 的第一个未完成 Step 继续执行
+```
+**关键**: 不要在单个会话中尝试完成超过 1 个 Phase 的创作。
+```
+
+---
+
 ## 🧠 Claude Code 技能调用矩阵
 
 > **每个步骤标注了 Claude Code 需要调用的核心技能。Claude Code 在读到该步骤时自动切换对应模式。**
@@ -154,7 +211,8 @@ cat > "$PROJECT_DIR/logs/progress.sh" << 'SCRIPT'
 #!/bin/bash
 source "$PROJECT_DIR/.sop_novel.env" 2>/dev/null
 if [ -d "$NOVEL_DIR/chapters" ]; then
-  CHINESE_CHARS=$(cat "$NOVEL_DIR/chapters"/*.md 2>/dev/null | perl -CS -ne 'while(/([\x{4e00}-\x{9fff}\x{3400}-\x{4dbf}\x{f900}-\x{faff}])/g){$c++} END{print $c}')
+  CHINESE_CHARS=$(cat "$NOVEL_DIR/chapters"/*.md 2>/dev/null | perl -CS -ne 'while(/([\x{4e00}-\x{9fff}\x{3400}-\x{4dbf}\x{f900}-\x{faff}])/g){$c++} END{print $c+0}')
+  # 如果chapters目录为空，perl输出空串，+0确保返回"0"而非空
 else
   CHINESE_CHARS=0
 fi
@@ -393,15 +451,26 @@ STRUCTURE
 > **[VALIDATE]** 生成完成后自动验证三幕结构质量
 
 ```
-[VALIDATE] 三幕结构自检:
-□ 从第1章到第31章的事件能串成一条因果链吗? (A导致B，B导致C...)
-□ 激励事件(第3章)是否足够打破主角的日常世界?
-□ 第一幕高潮(第8章)后，主角还能回到原来的生活吗? (不能才对)
-□ 中间转折(第15章)是否真正改变了故事走向?
-□ 至暗时刻(第20章)是否让主角失去了一切?
-□ 结局前是否所有主要伏笔都有对应的回收章节?
-□ 每个 ★★★★★ 的章节是否真的有关键转折?
-□ 是否避免了"巧合救场"? (主角必须主动行动)
+[VALIDATE] Claude Code 逐一执行以下验证:
+
+1. 因果链检查: 从第1章开始，每章的关键事件是否由上一章的事件导致?
+   → 将31章事件串联，朗读检查: "因为[第1章事件]，所以[第2章事件]，因此[第3章事件]..."
+   → 如果某处出现"然后"而非"因此"，标记为因果断裂
+
+2. 冲突升级检查: 检查 ★ 数量是否整体上升?
+   → 第1-8章: ★ → ★★ → ★★★★★ → ★★★ → ★★★★ → ★★★ → ★★★★ → ★★★★★
+   → 第9-24章: 应有 ≥3个 ★★★★★
+   → 第25-31章: ★★★★★ → ★ (逐渐回落的释放感)
+
+3. 伏笔闭环检查: 对伏笔矩阵中的每条 Fxx:
+   → 确认埋设章节 ≤ 揭示章节 - 3 (至少间隔3章才有铺垫感)
+   → 确认所有 Fxx 在表格的"揭示章节"列都有值
+
+4. 角色行为驱动力检查:
+   → 每章的关键事件是否由角色的"核心欲望"或"致命缺陷"驱动?
+   → 标注所有"巧合"事件并替换为主动行为
+
+如果任何检查项不通过: [GENERATE] 重新生成对应章节的关键事件，直到通过。
 ```
 
 ### Step 2.2 — 每章详细大纲 (31章逐一生成)
@@ -715,6 +784,11 @@ cat > "$NOVEL_DIR/characters/05_style_guide.md" << 'STYLE'
 
 > 这个文件是整部小说的"写作宪法"。Phase 4-6 的每一章创作前，Claude Code 必须重读本文件。
 
+## 叙述者声音 (最关键! 决定整部小说的"味道")
+- **叙述者身份**: [GENERATE: 如 — "隐身的说书人，偶尔以第一人称复数'我们'直接对读者说话" / "紧贴主角内心的第三人称，读者只能感知到主角感知到的东西" / "全知镜头般的客观叙述者，冷静不带感情" / "略带讽刺的旁观者，偶尔打破第四面墙"]
+- **叙述者与主角的距离**: [GENERATE: 如 — "零距离(读者完全代入主角视角)" / "近距(叙述者理解主角但不完全认同)" / "中距(叙述者客观观察主角)"]
+- **叙述者语气**: [GENERATE: 如 — "温和怜悯" / "冷峻克制" / "幽默调侃" / "紧张急迫" / "娓娓道来"]
+
 ## 叙事基调
 - **主基调**: [GENERATE: 如 — "冷峻克制中偶有温情流露"、"甜爽轻快但不油腻"]
 - **叙事距离**: [GENERATE: 如 — "第三人称限知视角，跟随主角的主观感受"]
@@ -841,6 +915,11 @@ Step D [REVIEW] 自动审查 (30秒):
   □ 章节尾部是否有钩子?
   □ 是否有新颖的表达，而非套路化?
   □ 是否避免了"他说""她说"等冗余标签?
+
+  ⚠️ 如果审查不通过 (任一□为否):
+  → 回到 Step C 重新生成该章
+  → 每次重试时明确告知 Claude Code 上次不通过的具体原因
+  → 如果3次重试仍不通过 → [DIALOG] 请求用户介入
 
 Step E [WRITE] 保存章节:
   - 写入 $NOVEL_DIR/chapters/ch{N}_{slug}.md
@@ -1380,30 +1459,52 @@ hook_score: ★★★★★
 TEMPLATE
 ```
 
-### Step 8.3 — 批量生成分集剧本
+### Step 8.3 — 逐集生成分集剧本
+
+> **[GENERATE]** 每集独立执行。不是 bash for-loop，而是逐集显式生成 — 与 Phase 4 的8步循环同样逻辑。
+
+```
+逐集生成流程 (共N集):
+
+对于第 M 集 (M=1 到 N):
+
+Step A [READ] 加载上下文:
+  1. 读取 $SCRIPTS_DIR/00_episode_plan.md 中第M集的分集映射
+  2. 读取对应的小说章节原文 (从 $NOVEL_DIR/chapters/)
+  3. 读取上一集剧本的卡点悬念，确保本集钩子对接
+
+Step B [RESEARCH] 改编定位:
+  - 确认本集在一组3集中的位置 (第1集抛钩子 / 第2集推冲突 / 第3集落卡点)
+  - 确认本集的情感标签和冲突等级
+
+Step C [GENERATE] 生成剧本 (800-1,500字):
+  - 使用 Step 8.2 的剧本模板格式
+  - 遵循 Step 8.0 的5条改编原则
+  - 视觉提示部分必须足够具体 (角色外观+场景光线+镜头语言)
+  - 卡点悬念必须让观众必须点下一集
+
+Step D [REVIEW] 审查:
+  □ 钩子是否在前5秒抓住人?
+  □ 对白是否 ≤15字/句?
+  □ 场景是否 ≤4个?
+  □ 卡点是否能驱动点击下一集?
+  □ 视觉提示是否足够具体?
+
+Step E [WRITE] 保存剧本:
+  - 写入 $SCRIPTS_DIR/episodes/ep{M}.md
+
+Step F [GIT] 提交:
+  - git commit -m "feat(phase-8): 第M集短剧剧本"
+```
 
 ```bash
-# [SHELL] 逐集生成剧本
+# [SHELL] 文件管理框架 (AI生成由Claude Code在循环内逐集完成)
 source "$PROJECT_DIR/.sop_novel.env"
-EPISODE_COUNT=20  # 根据分集策略调整
+EPISODE_COUNT=20  # 根据分集策略调整，建议20-25集
 
-for ep in $(seq -w 1 $EPISODE_COUNT); do
-  echo "📺 正在生成第 ${ep} 集剧本..."
-  
-  # [RESEARCH] 读取对应章节
-  # [GENERATE] Claude Code 生成剧本
-  # [REVIEW] 审查:
-  #   - 钩子是否有冲击力?
-  #   - 卡点是否让人想看下一集?
-  #   - 对白是否足够精炼?
-  
-  # [GIT] 逐集提交
-  cd "$PROJECT_DIR"
-  git add -A
-  git commit -m "feat(phase-8): 第${ep}集短剧剧本"
-done
-
-echo "✅ 全部 $EPISODE_COUNT 集剧本生成完毕"
+echo "📺 共需生成 $EPISODE_COUNT 集剧本，逐集执行 Step A→F"
+# Claude Code: 对每一集独立执行上面的 A→F 流程
+# bash 只做最后的批量管理，不做 AI 生成
 ```
 
 ### Step 8.4 — 小云雀 2.0 导入文件准备
@@ -1478,19 +1579,21 @@ git commit -m "feat(phase-8): 短剧分集剧本 & 小云雀2.0导入文件完�
 > **[DIALOG]** 指导用户导入每集剧本到小云雀 2.0
 
 ```
-📋 逐集导入流程:
+📋 逐集导入流程 (操作意图描述，具体按钮名称以小云雀实际界面为准):
 
 对于每一集 (EP01 — EP[N]):
 
-1. 在小云雀中点击「导入脚本」
-2. 粘贴文件内容: $OUTPUT_DIR/xiaoyunque/ep01.txt
-3. 配置该集参数:
-   - 集号: EP01
-   - 时长: 自动/手动设定 1-3 分钟
-   - 角色声音: [选择AI配音: 男声/女声/少年...]
-   - 背景音乐: [从素材库选择或上传]
-4. 点击「AI 生成视频」
-5. 等待生成 (通常 2-5 分钟/集)
+1. 在小云雀中找到"创建新视频"或"导入脚本"功能入口
+2. 将本集剧本内容粘贴到文本输入区:
+   文件路径: $OUTPUT_DIR/xiaoyunque/ep01.txt
+3. 配置本集参数 (根据小云雀实际提供的选项):
+   - 集号标识: EP01
+   - 目标时长: 1-3 分钟
+   - AI配音: 选择与角色性别/年龄匹配的声音
+   - 背景音乐: 选择与情感标签匹配的音乐 (如小云雀支持)
+4. 启动 AI 视频生成
+5. 等待生成完成 (预计 2-5 分钟/集)
+6. 下载生成的视频到本地: $OUTPUT_DIR/videos/raw/
 
 # [DIALOG] 每完成 5 集, 询问用户是否继续
 # "EP01-05 已导入并生成，是否继续 EP06-10？"
