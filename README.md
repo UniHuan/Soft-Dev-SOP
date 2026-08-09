@@ -35,6 +35,12 @@
 | [Web App 2 天开发 SOP](web/Web_App_2Day_Development_SOP.md) | Next.js 14+ + TypeScript + Prisma + Tailwind，前端 | 571 |
 | [后端服务 2 天开发 SOP](backend/Backend_Service_2Day_Development_SOP.md) | Hono + Prisma + JWT + Docker，前后端联调 | 807 |
 
+### 🆕 全栈多端开发
+
+| 文档 | 说明 | 行数 |
+|------|------|------|
+| [🏗️ 全栈多端产品 3 天开发 SOP](fullstack/Fullstack_MultiPlatform_Product_SOP.md) | 共享后端+CMS+Web+iOS+Android → 华为云 + 后期运营 + 生态建设 + 企业审计，21 Phase | 7,000+ |
+
 ### CI/CD
 
 | 文档 | 说明 | 行数 |
@@ -72,6 +78,7 @@
 | 小程序 App 2 天开发 SOP | uni-app + Vue 3 + TypeScript，微信/支付宝/抖音三端 | 📝 设计完成 |
 | Cocos Creator 游戏开发 SOP | 5阶段完整流程，微信/抖音/快手小游戏 | 📝 设计完成 |
 | sop-test 测试自动化工具 | 统一测试CLI，支持7平台 | 📝 设计完成 |
+| Flutter 跨平台 App 开发 SOP | Dart + Flutter，iOS/Android 一套代码 | 📝 设计完成 |
 
 ---
 
@@ -109,14 +116,12 @@ Claude Code 会读取对应的 SOP 文件，按 Phase 顺序全自动执行。
 
 | 指标 | 数值 |
 |------|------|
-| SOP 文档数 | 17 |
-| 设计文档数 | 3 |
-| 计划文档数 | 3 |
-| 总行数 | 22,000+ |
-| Phase/Step 总数 | 100+ Phase，250+ Step |
+| SOP 文档数 | 18 |
+| 总行数 | 30,000+ |
+| Phase/Step 总数 | 135+ Phase，300+ Step |
 | 技能标注密度 | 每个 Step 1-3 个技能标签 |
-| 编译验证点 | 50+ 处 |
-| 覆盖平台 | iOS、Android、HarmonyOS、Web、后端、软著、CI/CD、运营、流程、安全 |
+| 编译验证点 | 55+ 处 |
+| 覆盖平台 | iOS、Android、HarmonyOS、Web、后端、全栈多端、软著、CI/CD、运营、流程、安全 |
 
 ---
 
@@ -129,6 +134,7 @@ SOP/
 ├── android/                # Android 开发
 ├── web/                    # Web 前端开发
 ├── backend/                # 后端服务开发
+├── fullstack/              # 🆕 全栈多端开发 (后端+CMS+Web+iOS+Android+华为云)
 ├── miniprogram/            # 小程序开发 (规划中)
 ├── creative/               # 创意内容创作 (小说+短剧)
 ├── game/                   # 游戏开发 (规划中)

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Purpose
 
-This repo contains SOP (Standard Operating Procedure) documentation for fully automated app development using Claude Code + IDE, plus creative content workflows (AI novel writing + short drama video production). Covers iOS (SwiftUI+Xcode), HarmonyOS (ArkTS+DevEco Studio), software copyright, and creative content.
+This repo contains SOP (Standard Operating Procedure) documentation for fully automated app development using Claude Code + IDE, plus creative content workflows (AI novel writing + short drama video production). Covers iOS (SwiftUI+Xcode), HarmonyOS (ArkTS+DevEco Studio), Android (Kotlin+Compose), Web (Next.js), Backend (Hono), Fullstack multi-platform (Huawei Cloud), software copyright, and creative content.
 
 ## Key Files
 
@@ -16,6 +16,7 @@ This repo contains SOP (Standard Operating Procedure) documentation for fully au
 | `android/Android_App_2Day_Development_SOP.md` | 731 | Android (Kotlin+Compose) — 14 Phases |
 | `web/Web_App_2Day_Development_SOP.md` | 787 | Web (Next.js+Prisma) — 9 Phases |
 | `backend/Backend_Service_2Day_Development_SOP.md` | 878 | Backend (Hono+Prisma+JWT) — 6 Phases |
+| `fullstack/Fullstack_MultiPlatform_Product_SOP.md` | 7,000+ | Fullstack (Backend+CMS+Web+iOS+Android+Huawei Cloud+Ops+Audit+Ecosystem) — 21 Phases |
 | **Specialty SOPs** | | |
 | `copyright/Software_Copyright_Application_SOP.md` | 1,269 | Software copyright — 8 Phases |
 | `pipeline/App_Development_to_Copyright_Full_Pipeline.md` | 917 | Dev→App Store→Copyright pipeline |
